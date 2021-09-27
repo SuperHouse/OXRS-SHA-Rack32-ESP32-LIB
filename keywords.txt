@@ -1,0 +1,27 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+OXRS_Rack32	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setMqttBroker		KEYWORD2
+setMqttAuth		KEYWORD2
+setMqttTopicPrefix	KEYWORD2
+setMqttTopicSuffix	KEYWORD2
+
+setDisplayPorts	KEYWORD2
+updateDisplayPorts	KEYWORD2
+
+begin			KEYWORD2
+loop			KEYWORD2
+
+publishStatus		KEYWORD2
+publishTelemetry	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
