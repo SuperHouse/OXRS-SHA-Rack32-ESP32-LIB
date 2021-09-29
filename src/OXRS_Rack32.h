@@ -10,16 +10,18 @@
 #include <OXRS_LCD.h>                 // For LCD runtime displays
 
 /* Serial */
-#define       SERIAL_BAUD_RATE        115200
+#define       SERIAL_BAUD_RATE          115200
 
 /* Ethernet */
-#define       ETHERNET_CS_PIN         26
-#define       WIZNET_RESET_PIN        13
+#define       ETHERNET_CS_PIN           26
+#define       WIZNET_RESET_PIN          13
+#define       DHCP_TIMEOUT_MS           15000
+#define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
 /* MCP9808 temp sensor */
-#define       MCP9808_INTERVAL_MS     60000L
-#define       MCP9808_I2C_ADDRESS     0x18
-#define       MCP9808_MODE            0
+#define       MCP9808_INTERVAL_MS       60000
+#define       MCP9808_I2C_ADDRESS       0x18
+#define       MCP9808_MODE              0
 //  Mode Resolution  SampleTime
 //  0    0.5°C       30 ms
 //  1    0.25°C      65 ms

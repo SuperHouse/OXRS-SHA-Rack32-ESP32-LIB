@@ -117,10 +117,14 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 void OXRS_Rack32::loop()
 {
   // Check our ethernet connection
-  Ethernet.maintain();
-
-  // Maintain MQTT (process any messages)
-  _mqtt.loop();
+  if (Ethernet.linkStatus() == LinkON)
+  {
+    // Maintain our DHCP lease
+    Ethernet.maintain();
+    
+    // Maintain MQTT (process any messages)
+    _mqtt.loop();
+  }  
     
   // Maintain screen
   _screen.loop();
@@ -189,10 +193,16 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
 
   // Obtain IP address
   Serial.print(F("Getting IP address via DHCP: "));
-  Ethernet.begin(ethernetMac);
-
-  // Display IP address on serial
-  Serial.println(Ethernet.localIP());
+  if (Ethernet.begin(ethernetMac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
+  {
+    // Display IP address on serial
+    Serial.println(Ethernet.localIP());
+  }
+  else
+  {
+    // Unable to obtain a DHCP lease
+    Serial.println(F("FAILED!"));
+  }
 }
 
 void OXRS_Rack32::_initialiseTempSensor()
