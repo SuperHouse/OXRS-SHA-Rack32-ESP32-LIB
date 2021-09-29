@@ -193,7 +193,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
 
   // Obtain IP address
   Serial.print(F("Getting IP address via DHCP: "));
-  if (Ethernet.begin(ethernetMac))
+  if (Ethernet.begin(ethernetMac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     // Display IP address on serial
     Serial.println(Ethernet.localIP());
