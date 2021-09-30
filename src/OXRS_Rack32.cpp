@@ -44,7 +44,7 @@ void _mqttCallback(char * topic, byte * payload, int length)
 
 void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
 {
-  _mqttClient.setServer(broker, port);
+  _mqtt.setBroker(broker, port);
 }
 
 void OXRS_Rack32::setMqttAuth(const char * username, const char * password)
