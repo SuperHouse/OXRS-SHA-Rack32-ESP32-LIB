@@ -24,15 +24,6 @@ OXRS_MQTT _mqtt(_mqttClient);
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
 
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode)
-{
-  _fwName       = fwName;
-  _fwShortName  = fwShortName;
-  _fwMakerCode  = fwMakerCode;
-  _fwVersion    = fwVersion;  
-  _fwCode       = fwCode;
-}
-
 void _mqttCallback(char * topic, byte * payload, int length) 
 {
   // Indicate we have received something on MQTT
@@ -40,6 +31,15 @@ void _mqttCallback(char * topic, byte * payload, int length)
 
   // Pass this message down to our MQTT handler
   _mqtt.receive(topic, payload, length);
+}
+
+OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode)
+{
+  _fwName       = fwName;
+  _fwShortName  = fwShortName;
+  _fwMakerCode  = fwMakerCode;
+  _fwVersion    = fwVersion;  
+  _fwCode       = fwCode;
 }
 
 void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
@@ -98,10 +98,10 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   byte mac[6];
   _initialiseEthernet(mac);
   
-  // Set MQTT client id and callbacks
-  _mqtt.setClientId(_fwCode, mac);
+  // Register MQTT callbacks and set up MQTT
   _mqtt.onConfig(config);
   _mqtt.onCommand(command);
+  _mqtt.begin(_fwCode, mac);
 
   // Display the MQTT topic
   char topic[64];
