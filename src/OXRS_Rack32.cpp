@@ -98,10 +98,13 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   byte mac[6];
   _initialiseEthernet(mac);
   
-  // Register MQTT callbacks and set up MQTT
+  // Set the MQTT client id and register our callbacks
+  _mqtt.setClientId(_fwCode, mac);
   _mqtt.onConfig(config);
   _mqtt.onCommand(command);
-  _mqtt.begin(_fwCode, mac);
+  
+  // Start the MQTT handler
+  _mqtt.begin();
 
   // Display the MQTT topic
   char topic[64];
