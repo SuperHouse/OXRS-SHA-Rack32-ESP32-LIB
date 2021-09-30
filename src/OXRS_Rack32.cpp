@@ -168,7 +168,7 @@ boolean OXRS_Rack32::publishTelemetry(JsonObject json)
 void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
 {
   // Determine MAC address
-  Serial.print(F("Getting Ethernet MAC address from ESP32: "));
+  Serial.print(F("[eth ] getting MAC address from ESP32..."));
   WiFi.macAddress(ethernetMac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
   ethernetMac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
 
@@ -181,7 +181,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
   Ethernet.init(ETHERNET_CS_PIN);
 
   // Reset the Wiznet Ethernet chip
-  Serial.print("Resetting Wiznet W5500 Ethernet chip...");
+  Serial.print("[eth ] resetting Wiznet W5500...");
   pinMode(WIZNET_RESET_PIN, OUTPUT);
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(250);
@@ -192,7 +192,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
   Serial.println("done");
 
   // Obtain IP address
-  Serial.print(F("Getting IP address via DHCP: "));
+  Serial.print(F("[eth ] getting IP address via DHCP..."));
   if (Ethernet.begin(ethernetMac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     // Display IP address on serial
@@ -201,13 +201,13 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
   else
   {
     // Unable to obtain a DHCP lease
-    Serial.println(F("FAILED!"));
+    Serial.println(F("failed"));
   }
 }
 
 void OXRS_Rack32::_initialiseTempSensor()
 {
-  Serial.println(F("Scanning for temperature sensor on I2C bus..."));
+  Serial.println(F("[i2c ] scanning for temperature sensor..."));
   Serial.print(F(" - 0x"));
   Serial.print(MCP9808_I2C_ADDRESS, HEX);
   Serial.print(F("..."));
