@@ -9,10 +9,10 @@
 #include <OXRS_LCD.h>                 // For LCD runtime displays
 #include <ArduinoJson.h>
 
-/* Serial */
+// Serial
 #define       SERIAL_BAUD_RATE          115200
 
-/* Ethernet */
+// Ethernet
 #define       ETHERNET_CS_PIN           26
 #define       WIZNET_RESET_PIN          13
 #define       DHCP_TIMEOUT_MS           15000
@@ -20,7 +20,7 @@
 
 #define       REST_API_PORT             8080
 
-/* MCP9808 temp sensor */
+// MCP9808 temp sensor
 #define       MCP9808_INTERVAL_MS       60000
 #define       MCP9808_I2C_ADDRESS       0x18
 #define       MCP9808_MODE              0
@@ -62,12 +62,13 @@ class OXRS_Rack32
     jsonCallback _onConfig;
     jsonCallback _onCommand;
 
-    void _initialiseEthernet(byte * ethernetMac);
-
+    void _initialiseEthernet();
+    void _initialiseMqtt(jsonCallback config, jsonCallback command);
+    void _initialiseRestApi(void);
+    
     void _initialiseTempSensor(void);
     void _updateTempSensor(void);
-    
-    uint32_t _lastTempUpdate = -MCP9808_INTERVAL_MS;
+    uint32_t _lastTempUpdate;
 };
 
 #endif

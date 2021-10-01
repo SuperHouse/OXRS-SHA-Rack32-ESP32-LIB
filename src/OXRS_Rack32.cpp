@@ -10,7 +10,11 @@
 #include <Ethernet.h>                 // For networking
 #include <Adafruit_MCP9808.h>         // For temp sensor
 #include <PubSubClient.h>             // For MQTT
+#include <SPIFFS.h>                   // For file system
 #include <aWOT.h>                     // For REST API
+
+// Filename where MQTT settings are persisted on the file system
+static const char * MQTT_SETTING_FILENAME = "/mqtt.json";
 
 // Ethernet client
 EthernetClient _client;
@@ -29,6 +33,176 @@ OXRS_MQTT _mqtt(_mqttClient);
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
 
+/* File system helpers */
+void _mountFS()
+{
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+  Serial.print(F("[file] mounting SPIFFS..."));
+  if (!SPIFFS.begin())
+  { 
+    Serial.println(F("failed, might need formatting?"));
+    return; 
+  }
+  Serial.println(F("done"));
+#endif
+}
+
+boolean _formatFS()
+{
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+  Serial.print(F("[file] formatting SPIFFS..."));
+  if (!SPIFFS.format())
+  { 
+    Serial.println(F("failed"));
+    return false; 
+  }
+  Serial.println(F("done"));
+  return true;
+#else
+  return true;
+#endif
+}
+
+boolean _loadJson(DynamicJsonDocument * json, const char * filename)
+{
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+  Serial.print(F("[file] reading "));  
+  Serial.print(filename);
+  Serial.print(F("..."));
+
+  File file = SPIFFS.open(filename, "r");
+  if (!file) 
+  {
+    Serial.println(F("failed to open file"));
+    return false;
+  }
+  
+  if (file.size() == 0)
+  {
+    Serial.println(F("empty"));
+    return false;
+  }
+
+  Serial.print(file.size());
+  Serial.println(F(" bytes read"));
+  
+  DeserializationError error = deserializeJson(*json, file);
+  if (error) 
+  {
+    Serial.print(F("[erro] failed to deserialise JSON: "));
+    Serial.println(error.f_str());
+    return false;
+  }
+  
+  return json->isNull() ? false : true;
+#else
+  return false;
+#endif
+}
+
+boolean _saveJson(DynamicJsonDocument * json, const char * filename)
+{
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+  Serial.print(F("[file] writing "));
+  Serial.print(filename);
+  Serial.print(F("..."));
+
+  File file = SPIFFS.open(filename, "w");
+  if (!file) 
+  {
+    Serial.println(F("failed to open file"));
+    return false;
+  }
+
+  Serial.print(serializeJson(*json, file));
+  Serial.println(F(" bytes written"));
+  return true;
+#else
+  return true;
+#endif
+}
+
+boolean _deleteFile(const char * filename)
+{
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+  Serial.print(F("[file] deleting "));
+  Serial.print(filename);
+  Serial.print(F("..."));
+
+  if (!SPIFFS.remove(filename))
+  {
+    Serial.println(F("failed to delete file"));
+    return false;
+  }
+
+  Serial.println(F("done"));
+  return true;
+#endif
+  return true;
+}
+
+/* REST API handlers */
+void postReboot(Request &req, Response &res) 
+{
+  Serial.println(F("[api ] reboot"));
+  
+  // Restart the device
+  res.sendStatus(204);
+  ESP.restart();
+}
+
+void postFactoryReset(Request &req, Response &res) 
+{
+  Serial.print(F("[api ] factory reset"));
+
+  DynamicJsonDocument json(64);
+  deserializeJson(json, req);
+  
+  // Factory reset - either wiping setup/config data only or format file system
+  if (json.isNull() || !json["formatFileSystem"].as<boolean>())
+  {
+    Serial.println(F(" (delete settings)"));
+    if (!_deleteFile(MQTT_SETTING_FILENAME))
+    {
+      res.sendStatus(500);
+      return;
+    }
+  }
+  else
+  {
+    Serial.println(F(" (format file system)"));
+    if (!_formatFS())
+    {
+      res.sendStatus(500);
+      return;
+    }
+  }
+
+  // Restart the device
+  postReboot(req, res);
+}
+
+void postMqtt(Request &req, Response &res) 
+{
+  Serial.println(F("[api ] update MQTT settings"));
+
+  DynamicJsonDocument json(2048);
+  deserializeJson(json, req);
+
+  _mqtt.setJson(&json);
+  _mqtt.reconnect();
+  
+  if (!_saveJson(&json, MQTT_SETTING_FILENAME))
+  {
+    res.sendStatus(500);
+    return;
+  }
+
+  res.set("Content-Type", "application/json");
+  serializeJson(json, req);
+}
+
+/* MQTT callback */
 void _mqttCallback(char * topic, byte * payload, int length) 
 {
   // Indicate we have received something on MQTT
@@ -38,57 +212,7 @@ void _mqttCallback(char * topic, byte * payload, int length)
   _mqtt.receive(topic, payload, length);
 }
 
-void postReboot(Request &req, Response &res) 
-{
-  Serial.println(F("[syst] reboot"));
-  
-  // Restart the device
-  res.sendStatus(204);
-  ESP.restart();
-}
-
-void postFactoryReset(Request &req, Response &res) 
-{
-  DynamicJsonDocument json(64);
-  deserializeJson(json, req);
-  
-  // Factory reset - either wiping setup/config data only or format file system
-  if (json.isNull() || !json["formatFileSystem"].as<boolean>())
-  {
-    Serial.println(F("[syst] factory reset (clear setup/config data)"));
-    _mqtt.factoryReset(false);
-  }
-  else
-  {
-    Serial.println(F("[syst] factory reset (format file system)"));
-    _mqtt.factoryReset(true);
-  }
-
-  // Restart the device
-  postReboot(req, res);
-}
-
-void getMqtt(Request &req, Response &res) 
-{
-  DynamicJsonDocument json(2048);
-
-  _mqtt.getSetup(&json);
-
-  res.set("Content-Type", "application/json");
-  serializeJson(json, req);
-}
-
-void postMqtt(Request &req, Response &res) 
-{
-  DynamicJsonDocument json(2048);
-  deserializeJson(json, req);
-
-  _mqtt.setSetup(&json);
-
-  res.set("Content-Type", "application/json");
-  serializeJson(json, req);
-}
-
+/* Main program */
 OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode)
 {
   _fwName       = fwName;
@@ -150,33 +274,20 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   // Display firmware details
   _screen.draw_header(_fwMakerCode, _fwShortName, _fwVersion, "ESP32");
 
+  // Mount the file system
+  _mountFS();
+
   // Set up ethernet and obtain an IP address
-  byte mac[6];
-  _initialiseEthernet(mac);
-  
-  // Set the MQTT client id and register our callbacks
-  _mqtt.setClientId(_fwCode, mac);
-  _mqtt.onConfig(config);
-  _mqtt.onCommand(command);
-  
-  // Start the MQTT handler
-  _mqtt.begin();
+  _initialiseEthernet();
 
-  // Display the MQTT topic
-  char topic[64];
-  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
+  // Set up MQTT
+  _initialiseMqtt(config, command);
 
-  // Start listening for MQTT messages
-  _mqttClient.setCallback(_mqttCallback);  
+  // Set up the REST API
+  _initialiseRestApi();
 
   // Set up the temperature sensor
   _initialiseTempSensor();
-
-  // Setup our API endpoints
-  _api.post("/reboot", &postReboot);
-  _api.post("/factoryReset", &postFactoryReset);
-  _api.get("/mqtt", &getMqtt);
-  _api.post("/mqtt", &postMqtt);
 }
 
 void OXRS_Rack32::loop()
@@ -238,22 +349,19 @@ boolean OXRS_Rack32::publishTelemetry(JsonObject json)
   return success;
 }
 
-void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
+void OXRS_Rack32::_initialiseEthernet()
 {
-  // Determine MAC address
   Serial.print(F("[eth ] getting MAC address from ESP32..."));
-  WiFi.macAddress(ethernetMac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
-  ethernetMac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
+  byte mac[6];
+  WiFi.macAddress(mac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
+  mac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
 
-  // Display MAC address on serial
-  char mac_address[18];
-  sprintf_P(mac_address, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), ethernetMac[0], ethernetMac[1], ethernetMac[2], ethernetMac[3], ethernetMac[4], ethernetMac[5]);
-  Serial.println(mac_address);
+  char mac_display[18];
+  sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.println(mac_display);
 
-  // Set up Ethernet
   Ethernet.init(ETHERNET_CS_PIN);
 
-  // Reset the Wiznet Ethernet chip
   Serial.print("[eth ] resetting Wiznet W5500...");
   pinMode(WIZNET_RESET_PIN, OUTPUT);
   digitalWrite(WIZNET_RESET_PIN, HIGH);
@@ -264,18 +372,45 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
   delay(350);
   Serial.println("done");
 
-  // Obtain IP address
   Serial.print(F("[eth ] getting IP address via DHCP..."));
-  if (Ethernet.begin(ethernetMac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
+  if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
-    // Display IP address on serial
     Serial.println(Ethernet.localIP());
   }
   else
   {
-    // Unable to obtain a DHCP lease
     Serial.println(F("failed"));
   }
+}
+
+void OXRS_Rack32::_initialiseMqtt(jsonCallback config, jsonCallback command)
+{
+  // Restore any persisted settings
+  DynamicJsonDocument json(2048);
+  if (_loadJson(&json, MQTT_SETTING_FILENAME))
+  {
+    Serial.print(F("[mqtt] restore settings from file system..."));
+    _mqtt.setJson(&json);
+    Serial.println(F("done"));
+  }
+
+  // Display the MQTT topic
+  char topic[64];
+  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
+
+  // Register our callbacks
+  _mqtt.onConfig(config);
+  _mqtt.onCommand(command);
+
+  // Start listening for MQTT messages
+  _mqttClient.setCallback(_mqttCallback);
+}
+
+void OXRS_Rack32::_initialiseRestApi(void)
+{
+  _api.post("/reboot", &postReboot);
+  _api.post("/factoryReset", &postFactoryReset);
+  _api.post("/mqtt", &postMqtt);
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
