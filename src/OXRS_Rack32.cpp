@@ -42,17 +42,29 @@ void postReboot(Request &req, Response &res)
 {
   Serial.println(F("[syst] reboot"));
   
-  // Restart the ESP32
+  // Restart the device
   res.sendStatus(204);
   ESP.restart();
 }
 
 void postFactoryReset(Request &req, Response &res) 
 {
-  Serial.println(F("[syst] factory reset"));
+  DynamicJsonDocument json(64);
+  deserializeJson(json, req);
+  
+  // Factory reset - either wiping setup/config data only or format file system
+  if (json.isNull() || !json["formatFileSystem"].as<boolean>())
+  {
+    Serial.println(F("[syst] factory reset (clear setup/config data)"));
+    _mqtt.factoryReset(false);
+  }
+  else
+  {
+    Serial.println(F("[syst] factory reset (format file system)"));
+    _mqtt.factoryReset(true);
+  }
 
-  // Factory reset (wipe SPIFFS) and reboot
-  _mqtt.factoryReset();  
+  // Restart the device
   postReboot(req, res);
 }
 
@@ -266,7 +278,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * ethernetMac)
   }
 }
 
-void OXRS_Rack32::_initialiseTempSensor()
+void OXRS_Rack32::_initialiseTempSensor(void)
 {
   Serial.println(F("[i2c ] scanning for temperature sensor..."));
   Serial.print(F(" - 0x"));
@@ -287,7 +299,7 @@ void OXRS_Rack32::_initialiseTempSensor()
   }
 }
 
-void OXRS_Rack32::_updateTempSensor()
+void OXRS_Rack32::_updateTempSensor(void)
 {
   if ((millis() - _lastTempUpdate) > MCP9808_INTERVAL_MS)
   {

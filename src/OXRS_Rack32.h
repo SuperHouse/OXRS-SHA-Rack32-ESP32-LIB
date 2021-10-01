@@ -64,7 +64,7 @@ class OXRS_Rack32
 
     void _initialiseEthernet(byte * ethernetMac);
 
-    void _initialiseTempSensor(void);    
+    void _initialiseTempSensor(void);
     void _updateTempSensor(void);
     
     uint32_t _lastTempUpdate = -MCP9808_INTERVAL_MS;
