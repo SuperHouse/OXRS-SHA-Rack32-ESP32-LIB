@@ -5,9 +5,9 @@
 #ifndef OXRS_RACK32_H
 #define OXRS_RACK32_H
 
-#include <ArduinoJson.h>
 #include <OXRS_MQTT.h>                // For MQTT
 #include <OXRS_LCD.h>                 // For LCD runtime displays
+#include <ArduinoJson.h>
 
 /* Serial */
 #define       SERIAL_BAUD_RATE          115200
@@ -17,6 +17,8 @@
 #define       WIZNET_RESET_PIN          13
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
+
+#define       REST_API_PORT             8080
 
 /* MCP9808 temp sensor */
 #define       MCP9808_INTERVAL_MS       60000

@@ -10,15 +10,20 @@
 #include <Ethernet.h>                 // For networking
 #include <Adafruit_MCP9808.h>         // For temp sensor
 #include <PubSubClient.h>             // For MQTT
+#include <aWOT.h>                     // For REST API
 
 // Ethernet client
-EthernetClient _ethernet;
+EthernetClient _client;
+
+// REST API
+EthernetServer _server(REST_API_PORT);
+Application _api;
 
 // LCD screen
 OXRS_LCD _screen(Ethernet);
 
 // MQTT client
-PubSubClient _mqttClient(_ethernet);
+PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
 
 // Temp sensor
@@ -31,6 +36,45 @@ void _mqttCallback(char * topic, byte * payload, int length)
 
   // Pass this message down to our MQTT handler
   _mqtt.receive(topic, payload, length);
+}
+
+void postReboot(Request &req, Response &res) 
+{
+  Serial.println(F("[syst] reboot"));
+  
+  // Restart the ESP32
+  res.sendStatus(204);
+  ESP.restart();
+}
+
+void postFactoryReset(Request &req, Response &res) 
+{
+  Serial.println(F("[syst] factory reset"));
+
+  // Factory reset (wipe SPIFFS) and reboot
+  _mqtt.factoryReset();  
+  postReboot(req, res);
+}
+
+void getMqtt(Request &req, Response &res) 
+{
+  DynamicJsonDocument json(2048);
+
+  _mqtt.getSetup(&json);
+
+  res.set("Content-Type", "application/json");
+  serializeJson(json, req);
+}
+
+void postMqtt(Request &req, Response &res) 
+{
+  DynamicJsonDocument json(2048);
+  deserializeJson(json, req);
+
+  _mqtt.setSetup(&json);
+
+  res.set("Content-Type", "application/json");
+  serializeJson(json, req);
 }
 
 OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode)
@@ -115,6 +159,12 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 
   // Set up the temperature sensor
   _initialiseTempSensor();
+
+  // Setup our API endpoints
+  _api.post("/reboot", &postReboot);
+  _api.post("/factoryReset", &postFactoryReset);
+  _api.get("/mqtt", &getMqtt);
+  _api.post("/mqtt", &postMqtt);
 }
 
 void OXRS_Rack32::loop()
@@ -127,6 +177,14 @@ void OXRS_Rack32::loop()
     
     // Maintain MQTT (process any messages)
     _mqtt.loop();
+    
+    // Handle any REST API requests
+    EthernetClient client = _server.available();
+
+    if (client.connected()) {
+      _api.process(&client);
+      client.stop();
+    }    
   }  
     
   // Maintain screen
