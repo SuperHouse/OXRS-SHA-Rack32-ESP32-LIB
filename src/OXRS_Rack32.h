@@ -36,9 +36,10 @@ typedef void (*jsonCallback)(JsonObject);
 class OXRS_Rack32
 {
   public:
-    OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode);
+    OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion);
     
     void setMqttBroker(const char * broker, uint16_t port);
+    void setMqttClientId(const char * clientId);
     void setMqttAuth(const char * username, const char * password);
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
@@ -53,12 +54,6 @@ class OXRS_Rack32
     boolean publishTelemetry(JsonObject json);
 
   private:
-    const char * _fwName;
-    const char * _fwShortName;
-    const char * _fwMakerCode;
-    const char * _fwVersion;
-    const char * _fwCode;
-    
     jsonCallback _onConfig;
     jsonCallback _onCommand;
 

@@ -33,6 +33,12 @@ OXRS_MQTT _mqtt(_mqttClient);
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
 
+// Firmware details
+const char * _fwName;
+const char * _fwShortName;
+const char * _fwMakerCode;
+const char * _fwVersion;
+
 /* File system helpers */
 void _mountFS()
 {
@@ -142,7 +148,38 @@ boolean _deleteFile(const char * filename)
 }
 
 /* REST API handlers */
-void postReboot(Request &req, Response &res) 
+void getIndex(Request &req, Response &res)
+{
+  DynamicJsonDocument json(512);
+  
+  // Firmware
+  json["firmware"]["name"] = _fwName;
+  json["firmware"]["shortName"] = _fwShortName;
+  json["firmware"]["makerCode"] = _fwMakerCode;
+  json["firmware"]["version"] = _fwVersion;
+
+  // Network  
+  byte mac[6];
+  Ethernet.MACAddress(mac);
+  
+  char mac_display[18];
+  sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  json["network"]["ip"] = Ethernet.localIP();
+  json["network"]["mac"] = mac_display;
+  
+  // MQTT
+  char topic[32];
+  json["mqtt"]["configTopic"] = _mqtt.getConfigTopic(topic);
+  json["mqtt"]["commandTopic"] = _mqtt.getCommandTopic(topic);
+  json["mqtt"]["statusTopic"] = _mqtt.getStatusTopic(topic);
+  json["mqtt"]["telemetryTopic"] = _mqtt.getTelemetryTopic(topic);
+  
+  res.set("Content-Type", "application/json");
+  serializeJson(json, req);
+}
+
+void postReboot(Request &req, Response &res)
 {
   Serial.println(F("[api ] reboot"));
   
@@ -151,7 +188,7 @@ void postReboot(Request &req, Response &res)
   ESP.restart();
 }
 
-void postFactoryReset(Request &req, Response &res) 
+void postFactoryReset(Request &req, Response &res)
 {
   Serial.print(F("[api ] factory reset"));
 
@@ -182,7 +219,7 @@ void postFactoryReset(Request &req, Response &res)
   postReboot(req, res);
 }
 
-void postMqtt(Request &req, Response &res) 
+void postMqtt(Request &req, Response &res)
 {
   Serial.println(F("[api ] update MQTT settings"));
 
@@ -213,18 +250,22 @@ void _mqttCallback(char * topic, byte * payload, int length)
 }
 
 /* Main program */
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion, const char * fwCode)
+OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion)
 {
   _fwName       = fwName;
   _fwShortName  = fwShortName;
   _fwMakerCode  = fwMakerCode;
   _fwVersion    = fwVersion;  
-  _fwCode       = fwCode;
 }
 
 void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
 {
   _mqtt.setBroker(broker, port);
+}
+
+void OXRS_Rack32::setMqttClientId(const char * clientId)
+{
+  _mqtt.setClientId(clientId);
 }
 
 void OXRS_Rack32::setMqttAuth(const char * username, const char * password)
@@ -408,6 +449,7 @@ void OXRS_Rack32::_initialiseMqtt(jsonCallback config, jsonCallback command)
 
 void OXRS_Rack32::_initialiseRestApi(void)
 {
+  _api.get("/", &getIndex);
   _api.post("/reboot", &postReboot);
   _api.post("/factoryReset", &postFactoryReset);
   _api.post("/mqtt", &postMqtt);
