@@ -30,17 +30,14 @@
 //  2    0.125°C     130 ms
 //  3    0.0625°C    250 ms
 
-// Callback type for onConfig() and onCommand()
-typedef void (*jsonCallback)(JsonObject);
-
 class OXRS_Rack32
 {
   public:
     OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion);
-    
+   
     void setMqttBroker(const char * broker, uint16_t port);
-    void setMqttClientId(const char * clientId);
     void setMqttAuth(const char * username, const char * password);
+    void setMqttClientId(const char * clientId);
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
 
@@ -54,16 +51,17 @@ class OXRS_Rack32
     boolean publishTelemetry(JsonObject json);
 
   private:
+    voidCallback _onConnected;
     jsonCallback _onConfig;
     jsonCallback _onCommand;
 
-    void _initialiseEthernet();
-    void _initialiseMqtt(jsonCallback config, jsonCallback command);
+    void _initialiseEthernet(byte * mac);
+    void _initialiseMqtt(byte * mac, jsonCallback config, jsonCallback command);
     void _initialiseRestApi(void);
     
     void _initialiseTempSensor(void);
     void _updateTempSensor(void);
-    uint32_t _lastTempUpdate;
+    uint32_t _lastTempUpdate = -MCP9808_INTERVAL_MS;
 };
 
 #endif

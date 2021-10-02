@@ -148,47 +148,55 @@ boolean _deleteFile(const char * filename)
 }
 
 /* REST API handlers */
-void getIndex(Request &req, Response &res)
+void _getFirmwareJson(JsonObject * json)
 {
-  DynamicJsonDocument json(512);
-  
-  // Firmware
-  json["firmware"]["name"] = _fwName;
-  json["firmware"]["shortName"] = _fwShortName;
-  json["firmware"]["makerCode"] = _fwMakerCode;
-  json["firmware"]["version"] = _fwVersion;
+  json->getOrAddMember("name").set(_fwName);
+  json->getOrAddMember("shortName").set(_fwShortName);
+  json->getOrAddMember("makerCode").set(_fwMakerCode);
+  json->getOrAddMember("version").set(_fwVersion);
+}
 
-  // Network  
+void _getNetworkJson(JsonObject * json)
+{
   byte mac[6];
   Ethernet.MACAddress(mac);
   
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-  json["network"]["ip"] = Ethernet.localIP();
-  json["network"]["mac"] = mac_display;
+  json->getOrAddMember("ip").set(Ethernet.localIP());
+  json->getOrAddMember("mac").set(mac_display);
+}
+
+void _getIndex(Request &req, Response &res)
+{
+  Serial.println(F("[api ] index"));
+
+  DynamicJsonDocument json(512);
   
-  // MQTT
-  char topic[32];
-  json["mqtt"]["configTopic"] = _mqtt.getConfigTopic(topic);
-  json["mqtt"]["commandTopic"] = _mqtt.getCommandTopic(topic);
-  json["mqtt"]["statusTopic"] = _mqtt.getStatusTopic(topic);
-  json["mqtt"]["telemetryTopic"] = _mqtt.getTelemetryTopic(topic);
+  JsonObject firmware = json.createNestedObject("firmware");
+  _getFirmwareJson(&firmware);
+
+  JsonObject network = json.createNestedObject("network");
+  _getNetworkJson(&network);
+  
+  JsonObject mqtt = json.createNestedObject("mqtt");
+  _mqtt.getJson(&mqtt);
   
   res.set("Content-Type", "application/json");
   serializeJson(json, req);
 }
 
-void postReboot(Request &req, Response &res)
+void _postReboot(Request &req, Response &res)
 {
   Serial.println(F("[api ] reboot"));
-  
+
   // Restart the device
   res.sendStatus(204);
   ESP.restart();
 }
 
-void postFactoryReset(Request &req, Response &res)
+void _postFactoryReset(Request &req, Response &res)
 {
   Serial.print(F("[api ] factory reset"));
 
@@ -216,33 +224,58 @@ void postFactoryReset(Request &req, Response &res)
   }
 
   // Restart the device
-  postReboot(req, res);
+  _postReboot(req, res);
 }
 
-void postMqtt(Request &req, Response &res)
+void _postMqtt(Request &req, Response &res)
 {
   Serial.println(F("[api ] update MQTT settings"));
 
   DynamicJsonDocument json(2048);
   deserializeJson(json, req);
 
-  _mqtt.setJson(&json);
+  JsonObject mqtt = json.as<JsonObject>();
+  _mqtt.setJson(&mqtt);
+  
   _mqtt.reconnect();
   
   if (!_saveJson(&json, MQTT_SETTING_FILENAME))
   {
     res.sendStatus(500);
-    return;
   }
-
-  res.set("Content-Type", "application/json");
-  serializeJson(json, req);
+  else
+  {
+    res.sendStatus(204);
+  }    
 }
 
-/* MQTT callback */
+/* MQTT callbacks */
+void _mqttConnected() 
+{
+  // TODO: Update screen
+
+  // Build device discovery details
+  DynamicJsonDocument json(512);
+  
+  JsonObject firmware = json.createNestedObject("firmware");
+  _getFirmwareJson(&firmware);
+
+  JsonObject network = json.createNestedObject("network");
+  _getNetworkJson(&network);
+
+  // Publish device discovery details (retained)
+  char topic[64];
+
+  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "firmware");
+  _mqtt.publish(firmware, topic, true);
+  
+  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "network");
+  _mqtt.publish(network, topic, true);
+}
+
 void _mqttCallback(char * topic, byte * payload, int length) 
 {
-  // Indicate we have received something on MQTT
+  // Update screen
   _screen.trigger_mqtt_rx_led();
 
   // Pass this message down to our MQTT handler
@@ -263,14 +296,14 @@ void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
   _mqtt.setBroker(broker, port);
 }
 
-void OXRS_Rack32::setMqttClientId(const char * clientId)
-{
-  _mqtt.setClientId(clientId);
-}
-
 void OXRS_Rack32::setMqttAuth(const char * username, const char * password)
 {
   _mqtt.setAuth(username, password);
+}
+
+void OXRS_Rack32::setMqttClientId(const char * clientId)
+{
+  _mqtt.setClientId(clientId);
 }
 
 void OXRS_Rack32::setMqttTopicPrefix(const char * prefix)
@@ -319,10 +352,11 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _mountFS();
 
   // Set up ethernet and obtain an IP address
-  _initialiseEthernet();
+  byte mac[6];
+  _initialiseEthernet(mac);
 
   // Set up MQTT
-  _initialiseMqtt(config, command);
+  _initialiseMqtt(mac, config, command);
 
   // Set up the REST API
   _initialiseRestApi();
@@ -390,10 +424,9 @@ boolean OXRS_Rack32::publishTelemetry(JsonObject json)
   return success;
 }
 
-void OXRS_Rack32::_initialiseEthernet()
+void OXRS_Rack32::_initialiseEthernet(byte * mac)
 {
   Serial.print(F("[eth ] getting MAC address from ESP32..."));
-  byte mac[6];
   WiFi.macAddress(mac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
   mac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
 
@@ -424,14 +457,20 @@ void OXRS_Rack32::_initialiseEthernet()
   }
 }
 
-void OXRS_Rack32::_initialiseMqtt(jsonCallback config, jsonCallback command)
+void OXRS_Rack32::_initialiseMqtt(byte * mac, jsonCallback config, jsonCallback command)
 {
-  // Restore any persisted settings
+  // Set the default client id to the last 3 bytes of the MAC address
+  char clientId[32];
+  sprintf_P(clientId, PSTR("%02x%02x%02x"), mac[3], mac[4], mac[5]);  
+  _mqtt.setClientId(clientId);
+  
+  // Restore any persisted settings (this might overwrite the client id)
   DynamicJsonDocument json(2048);
   if (_loadJson(&json, MQTT_SETTING_FILENAME))
   {
     Serial.print(F("[mqtt] restore settings from file system..."));
-    _mqtt.setJson(&json);
+    JsonObject mqtt = json.as<JsonObject>();
+    _mqtt.setJson(&mqtt);
     Serial.println(F("done"));
   }
 
@@ -440,6 +479,7 @@ void OXRS_Rack32::_initialiseMqtt(jsonCallback config, jsonCallback command)
   _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
 
   // Register our callbacks
+  _mqtt.onConnected(_mqttConnected);
   _mqtt.onConfig(config);
   _mqtt.onCommand(command);
 
@@ -449,10 +489,10 @@ void OXRS_Rack32::_initialiseMqtt(jsonCallback config, jsonCallback command)
 
 void OXRS_Rack32::_initialiseRestApi(void)
 {
-  _api.get("/", &getIndex);
-  _api.post("/reboot", &postReboot);
-  _api.post("/factoryReset", &postFactoryReset);
-  _api.post("/mqtt", &postMqtt);
+  _api.get("/", &_getIndex);
+  _api.post("/reboot", &_postReboot);
+  _api.post("/factoryReset", &_postFactoryReset);
+  _api.post("/mqtt", &_postMqtt);
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
