@@ -21,8 +21,10 @@
 // REST API
 #define       REST_API_PORT             8080
 
-// MCP9808 temp sensor
-#define       MCP9808_INTERVAL_MS       60000
+// Temperature update internal
+#define       DEFAULT_TEMP_UPDATE_MS    60000
+
+// MCP9808 temperature sensor
 #define       MCP9808_I2C_ADDRESS       0x18
 #define       MCP9808_MODE              0
 //  Mode Resolution  SampleTime
@@ -58,8 +60,7 @@ class OXRS_Rack32
     
     void _initialiseTempSensor(void);
     void _updateTempSensor(void);
-    
-    uint32_t _lastTempUpdate = -MCP9808_INTERVAL_MS;
+    uint32_t _lastTempUpdate;
 };
 
 #endif

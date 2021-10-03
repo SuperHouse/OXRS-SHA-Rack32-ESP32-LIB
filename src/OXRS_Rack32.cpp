@@ -43,6 +43,13 @@ const char * _fwVersion;
 jsonCallback _onConfig;
 jsonCallback _onCommand;
 
+// Temperature update interval - extend or disable temp updates via 
+// the MQTT config option "temperatureUpdateMillis" - zero to disable
+//
+// WARNING: depending how long it takes to read the temp sensor, 
+//          you might see event detection/processing interrupted
+uint32_t _temp_update_ms = DEFAULT_TEMP_UPDATE_MS;
+
 /* File system helpers */
 void _mountFS()
 {
@@ -269,7 +276,11 @@ void _mqttDisconnected()
 
 void _mqttConfig(JsonObject json)
 {
-  // Any Rack32 config can be handled in here
+  if (json.containsKey("temperatureUpdateMillis"))
+  {
+    _temp_update_ms = json["temperatureUpdateMillis"].as<uint32_t>();
+  }
+  
   if (_onConfig) { _onConfig(json); }
 }
 
@@ -541,7 +552,7 @@ void OXRS_Rack32::_initialiseTempSensor(void)
 
 void OXRS_Rack32::_updateTempSensor(void)
 {
-  if ((millis() - _lastTempUpdate) > MCP9808_INTERVAL_MS)
+  if (_temp_update_ms > 0 && (millis() - _lastTempUpdate) > _temp_update_ms)
   {
     // Read temp from onboard sensor
     float temperature = _tempSensor.readTempC();
