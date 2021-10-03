@@ -51,10 +51,6 @@ class OXRS_Rack32
     boolean publishTelemetry(JsonObject json);
 
   private:
-    voidCallback _onConnected;
-    jsonCallback _onConfig;
-    jsonCallback _onCommand;
-
     void _initialiseEthernet(byte * mac);
     void _initialiseMqtt(byte * mac, jsonCallback config, jsonCallback command);
     void _initialiseRestApi(void);

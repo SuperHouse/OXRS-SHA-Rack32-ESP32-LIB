@@ -252,8 +252,9 @@ void _postMqtt(Request &req, Response &res)
 /* MQTT callbacks */
 void _mqttConnected() 
 {
-  // TODO: Update screen
-
+  // Update screen
+  _screen.show_mqtt_connection_status(true);
+  
   // Build device discovery details
   DynamicJsonDocument json(512);
   
@@ -271,6 +272,12 @@ void _mqttConnected()
   
   sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "network");
   _mqtt.publish(network, topic, true);
+}
+
+void _mqttDisconnected() 
+{
+  // Update screen
+  _screen.show_mqtt_connection_status(false);
 }
 
 void _mqttCallback(char * topic, byte * payload, int length) 
@@ -383,7 +390,7 @@ void OXRS_Rack32::loop()
       _api.process(&client);
       client.stop();
     }    
-  }  
+  }
     
   // Maintain screen
   _screen.loop();
@@ -480,6 +487,7 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac, jsonCallback config, jsonCallback 
 
   // Register our callbacks
   _mqtt.onConnected(_mqttConnected);
+  _mqtt.onDisconnected(_mqttDisconnected);
   _mqtt.onConfig(config);
   _mqtt.onCommand(command);
 
