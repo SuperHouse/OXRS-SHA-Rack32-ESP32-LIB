@@ -503,9 +503,16 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac, jsonCallback config, jsonCallback 
 
 void OXRS_Rack32::_initialiseRestApi(void)
 {
+  Serial.println(F("[api ] adding / handler [get]"));
   _api.get("/", &_getIndex);
+  
+  Serial.println(F("[api ] adding /reboot handler [post]"));
   _api.post("/reboot", &_postReboot);
+
+  Serial.println(F("[api ] adding /factoryReset handler [post]"));
   _api.post("/factoryReset", &_postFactoryReset);
+
+  Serial.println(F("[api ] adding /mqtt handler [post]"));
   _api.post("/mqtt", &_postMqtt);
 }
 
