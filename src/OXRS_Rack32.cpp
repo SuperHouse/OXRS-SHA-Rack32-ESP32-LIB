@@ -45,6 +45,10 @@ const char * _fwShortName;
 const char * _fwMakerCode;
 const char * _fwVersion;
 
+// MQTT callbacks
+jsonCallback _onConfig;
+jsonCallback _onCommand;
+
 /* File system helpers */
 void _mountFS()
 {
@@ -286,6 +290,18 @@ void _mqttDisconnected()
   _screen.show_mqtt_connection_status(false);
 }
 
+void _mqttConfig(JsonObject json)
+{
+  // Any Rack32 config can be handled in here
+  if (_onConfig) { _onConfig(json); }
+}
+
+void _mqttCommand(JsonObject json)
+{
+  // Any Rack32 commands can be handled in here
+  if (_onCommand) { _onCommand(json); }
+}
+
 void _mqttCallback(char * topic, byte * payload, int length) 
 {
   // Update screen
@@ -341,6 +357,9 @@ void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
 
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
+  _onConfig = config;
+  _onCommand = command;
+  
   // Startup logging to serial
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println();
@@ -369,7 +388,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _initialiseEthernet(mac);
 
   // Set up MQTT
-  _initialiseMqtt(mac, config, command);
+  _initialiseMqtt(mac);
 
   // Set up the REST API
   _initialiseRestApi();
@@ -470,7 +489,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   }
 }
 
-void OXRS_Rack32::_initialiseMqtt(byte * mac, jsonCallback config, jsonCallback command)
+void OXRS_Rack32::_initialiseMqtt(byte * mac)
 {
   // Set the default client id to the last 3 bytes of the MAC address
   char clientId[32];
@@ -494,8 +513,8 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac, jsonCallback config, jsonCallback 
   // Register our callbacks
   _mqtt.onConnected(_mqttConnected);
   _mqtt.onDisconnected(_mqttDisconnected);
-  _mqtt.onConfig(config);
-  _mqtt.onCommand(command);
+  _mqtt.onConfig(_mqttConfig);
+  _mqtt.onCommand(_mqttCommand);
 
   // Start listening for MQTT messages
   _mqttClient.setCallback(_mqttCallback);

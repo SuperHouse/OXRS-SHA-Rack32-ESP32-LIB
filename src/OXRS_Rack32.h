@@ -52,7 +52,7 @@ class OXRS_Rack32
 
   private:
     void _initialiseEthernet(byte * mac);
-    void _initialiseMqtt(byte * mac, jsonCallback config, jsonCallback command);
+    void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
     
     void _initialiseTempSensor(void);
