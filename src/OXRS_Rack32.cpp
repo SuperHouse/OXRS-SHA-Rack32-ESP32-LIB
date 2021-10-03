@@ -6,12 +6,18 @@
 #include "OXRS_Rack32.h"
 
 #include <Wire.h>                     // For I2C
-#include <WiFi.h>                     // Also required for Ethernet to get MAC
 #include <Ethernet.h>                 // For networking
+#include <WiFi.h>                     // Required for Ethernet to get MAC
 #include <Adafruit_MCP9808.h>         // For temp sensor
 #include <PubSubClient.h>             // For MQTT
-#include <SPIFFS.h>                   // For file system
 #include <aWOT.h>                     // For REST API
+
+#if defined(ARDUINO_ARCH_ESP32)
+#include <SPIFFS.h>                   // For ESP32 file system
+#elif defined(ARDUINO_ARCH_ESP8266)
+#include <LittleFS.h>                 // For ESP8266 file system
+#define SPIFFS LittleFS
+#endif
 
 // Filename where MQTT settings are persisted on the file system
 static const char * MQTT_SETTING_FILENAME = "/mqtt.json";
