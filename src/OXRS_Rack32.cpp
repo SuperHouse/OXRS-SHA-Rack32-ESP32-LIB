@@ -11,13 +11,7 @@
 #include <Adafruit_MCP9808.h>         // For temp sensor
 #include <PubSubClient.h>             // For MQTT
 #include <aWOT.h>                     // For REST API
-
-#if defined(ARDUINO_ARCH_ESP32)
 #include <SPIFFS.h>                   // For ESP32 file system
-#elif defined(ARDUINO_ARCH_ESP8266)
-#include <LittleFS.h>                 // For ESP8266 file system
-#define SPIFFS LittleFS
-#endif
 
 // Filename where MQTT settings are persisted on the file system
 static const char * MQTT_JSON_FILENAME = "/mqtt.json";
@@ -45,14 +39,13 @@ const char * _fwShortName;
 const char * _fwMakerCode;
 const char * _fwVersion;
 
-// MQTT callbacks
+// MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
 jsonCallback _onCommand;
 
 /* File system helpers */
 void _mountFS()
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
   Serial.print(F("[file] mounting SPIFFS..."));
   if (!SPIFFS.begin())
   { 
@@ -60,12 +53,10 @@ void _mountFS()
     return; 
   }
   Serial.println(F("done"));
-#endif
 }
 
 boolean _formatFS()
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
   Serial.print(F("[file] formatting SPIFFS..."));
   if (!SPIFFS.format())
   { 
@@ -74,14 +65,10 @@ boolean _formatFS()
   }
   Serial.println(F("done"));
   return true;
-#else
-  return false;
-#endif
 }
 
 boolean _loadJson(DynamicJsonDocument * json, const char * filename)
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
   Serial.print(F("[file] reading "));  
   Serial.print(filename);
   Serial.print(F("..."));
@@ -111,14 +98,10 @@ boolean _loadJson(DynamicJsonDocument * json, const char * filename)
   }
   
   return json->isNull() ? false : true;
-#else
-  return false;
-#endif
 }
 
 boolean _saveJson(DynamicJsonDocument * json, const char * filename)
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
   Serial.print(F("[file] writing "));
   Serial.print(filename);
   Serial.print(F("..."));
@@ -133,14 +116,10 @@ boolean _saveJson(DynamicJsonDocument * json, const char * filename)
   Serial.print(serializeJson(*json, file));
   Serial.println(F(" bytes written"));
   return true;
-#else
-  return false;
-#endif
 }
 
 boolean _deleteFile(const char * filename)
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
   Serial.print(F("[file] deleting "));
   Serial.print(filename);
   Serial.print(F("..."));
@@ -153,8 +132,6 @@ boolean _deleteFile(const char * filename)
 
   Serial.println(F("done"));
   return true;
-#endif
-  return false;
 }
 
 /* REST API handlers */
