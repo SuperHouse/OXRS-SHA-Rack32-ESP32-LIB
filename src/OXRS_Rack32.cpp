@@ -20,7 +20,7 @@
 #endif
 
 // Filename where MQTT settings are persisted on the file system
-static const char * MQTT_SETTING_FILENAME = "/mqtt.json";
+static const char * MQTT_JSON_FILENAME = "/mqtt.json";
 
 // Ethernet client
 EthernetClient _client;
@@ -29,12 +29,12 @@ EthernetClient _client;
 EthernetServer _server(REST_API_PORT);
 Application _api;
 
-// LCD screen
-OXRS_LCD _screen(Ethernet);
-
 // MQTT client
 PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
+
+// LCD screen
+OXRS_LCD _screen(Ethernet);
 
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
@@ -217,7 +217,7 @@ void _postFactoryReset(Request &req, Response &res)
   if (json.isNull() || !json["formatFileSystem"].as<boolean>())
   {
     Serial.println(F(" (delete settings)"));
-    if (!_deleteFile(MQTT_SETTING_FILENAME))
+    if (!_deleteFile(MQTT_JSON_FILENAME))
     {
       res.sendStatus(500);
       return;
@@ -249,7 +249,7 @@ void _postMqtt(Request &req, Response &res)
   
   _mqtt.reconnect();
   
-  if (!_saveJson(&json, MQTT_SETTING_FILENAME))
+  if (!_saveJson(&json, MQTT_JSON_FILENAME))
   {
     res.sendStatus(500);
   }
@@ -357,6 +357,8 @@ void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
 
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
+  // We wrap the callbacks so we can intercept messages intended for 
+  // the Rack32 specifically - store here for use in the wrappers
   _onConfig = config;
   _onCommand = command;
   
@@ -387,7 +389,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   byte mac[6];
   _initialiseEthernet(mac);
 
-  // Set up MQTT
+  // Set up MQTT (don't attempt to connect yet)
   _initialiseMqtt(mac);
 
   // Set up the REST API
@@ -426,6 +428,7 @@ void OXRS_Rack32::loop()
 
 boolean OXRS_Rack32::publishStatus(JsonObject json)
 {
+  // Check for something we can show on the screen
   if (json.containsKey("index"))
   {
     char event[32];
@@ -498,7 +501,7 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   
   // Restore any persisted settings (this might overwrite the client id)
   DynamicJsonDocument json(2048);
-  if (_loadJson(&json, MQTT_SETTING_FILENAME))
+  if (_loadJson(&json, MQTT_JSON_FILENAME))
   {
     Serial.print(F("[mqtt] restore settings from file system..."));
     JsonObject mqtt = json.as<JsonObject>();

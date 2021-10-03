@@ -5,7 +5,7 @@
 #ifndef OXRS_RACK32_H
 #define OXRS_RACK32_H
 
-#include <OXRS_MQTT.h>                // For MQTT
+#include <OXRS_MQTT.h>                // For MQTT pub/sub
 #include <OXRS_LCD.h>                 // For LCD runtime displays
 #include <ArduinoJson.h>
 
@@ -18,6 +18,7 @@
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
+// REST API
 #define       REST_API_PORT             8080
 
 // MCP9808 temp sensor
@@ -57,6 +58,7 @@ class OXRS_Rack32
     
     void _initialiseTempSensor(void);
     void _updateTempSensor(void);
+    
     uint32_t _lastTempUpdate = -MCP9808_INTERVAL_MS;
 };
 
