@@ -37,6 +37,7 @@ Adafruit_MCP9808 _tempSensor;
 const char * _fwName;
 const char * _fwShortName;
 const char * _fwMakerCode;
+const char * _fwMakerName;
 const char * _fwVersion;
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
@@ -300,11 +301,12 @@ void _mqttCallback(char * topic, byte * payload, int length)
 }
 
 /* Main program */
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion)
+OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwMakerName, const char * fwVersion)
 {
   _fwName       = fwName;
   _fwShortName  = fwShortName;
   _fwMakerCode  = fwMakerCode;
+  _fwMakerName  = fwMakerName;
   _fwVersion    = fwVersion;  
 }
 
@@ -368,7 +370,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _screen.begin();
 
   // Display firmware details
-  _screen.draw_header(_fwMakerCode, _fwShortName, _fwVersion, "ESP32");
+  _screen.draw_header(_fwMakerCode, _fwMakerName, _fwShortName, _fwVersion, "ESP32");
 
   // Mount the file system
   _mountFS();

@@ -36,7 +36,7 @@
 class OXRS_Rack32
 {
   public:
-    OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwVersion);
+    OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwMakerName, const char * fwVersion);
    
     void setMqttBroker(const char * broker, uint16_t port);
     void setMqttAuth(const char * username, const char * password);
