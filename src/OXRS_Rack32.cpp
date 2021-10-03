@@ -162,6 +162,14 @@ void _getNetworkJson(JsonObject * json)
   json->getOrAddMember("mac").set(mac_display);
 }
 
+void _getConfigJson(JsonObject * json)
+{
+  JsonObject temperatureUpdateMillis = json->createNestedObject("temperatureUpdateMillis");
+  
+  temperatureUpdateMillis.getOrAddMember("type").set("long");
+  temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
+}
+
 void _getIndex(Request &req, Response &res)
 {
   Serial.println(F("[api ] index"));
@@ -173,6 +181,9 @@ void _getIndex(Request &req, Response &res)
 
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
+  
+  JsonObject config = json.createNestedObject("config");
+  _getConfigJson(&config);
   
   JsonObject mqtt = json.createNestedObject("mqtt");
   _mqtt.getJson(&mqtt);
@@ -249,7 +260,7 @@ void _mqttConnected()
   // Update screen
   _screen.show_mqtt_connection_status(true);
   
-  // Build device discovery details
+  // Build device adoption info
   DynamicJsonDocument json(512);
   
   JsonObject firmware = json.createNestedObject("firmware");
@@ -258,14 +269,11 @@ void _mqttConnected()
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
 
-  // Publish device discovery details (retained)
-  char topic[64];
+  JsonObject config = json.createNestedObject("config");
+  _getConfigJson(&config);
 
-  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "firmware");
-  _mqtt.publish(firmware, topic, true);
-  
-  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "network");
-  _mqtt.publish(network, topic, true);
+  // Publish device adoption info
+  _mqtt.publishAdopt(json.as<JsonObject>());
 }
 
 void _mqttDisconnected() 
@@ -507,6 +515,9 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   _mqtt.onConfig(_mqttConfig);
   _mqtt.onCommand(_mqttCommand);
 
+  // Set the max buffer size so we can handle large messages
+  _mqttClient.setBufferSize(MQTT_MAX_MESSAGE_SIZE);
+  
   // Start listening for MQTT messages
   _mqttClient.setCallback(_mqttCallback);
 }

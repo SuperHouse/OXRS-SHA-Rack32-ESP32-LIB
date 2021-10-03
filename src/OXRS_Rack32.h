@@ -18,6 +18,9 @@
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
+// MQTT
+#define       MQTT_MAX_MESSAGE_SIZE     4096
+
 // REST API
 #define       REST_API_PORT             8080
 
