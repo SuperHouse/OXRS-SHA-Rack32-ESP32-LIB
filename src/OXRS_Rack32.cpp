@@ -39,6 +39,9 @@ const char * _fwShortName;
 const char * _fwMakerCode;
 const char * _fwVersion;
 
+// Supported device config
+JsonObject _deviceConfig;
+
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
 jsonCallback _onCommand;
@@ -49,6 +52,22 @@ jsonCallback _onCommand;
 // WARNING: depending how long it takes to read the temp sensor, 
 //          you might see event detection/processing interrupted
 uint32_t _temp_update_ms = DEFAULT_TEMP_UPDATE_MS;
+
+/* JSON helpers */
+void _mergeJson(JsonVariant dst, JsonVariantConst src)
+{
+  if (src.is<JsonObject>())
+  {
+    for (JsonPair kvp : src.as<JsonObject>())
+    {
+      _mergeJson(dst.getOrAddMember(kvp.key().c_str()), kvp.value());
+    }
+  }
+  else
+  {
+    dst.set(src);
+  }
+}
 
 /* File system helpers */
 void _mountFS()
@@ -164,10 +183,18 @@ void _getNetworkJson(JsonObject * json)
 
 void _getConfigJson(JsonObject * json)
 {
+  // Add Rack32 specific config
   JsonObject temperatureUpdateMillis = json->createNestedObject("temperatureUpdateMillis");
   
   temperatureUpdateMillis.getOrAddMember("type").set("long");
   temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
+
+  // Merge any device config
+  for (JsonPair kvp : _deviceConfig)
+  {
+    Serial.println(kvp.key().c_str());
+    json->getOrAddMember(kvp.key().c_str()).set(kvp.value());
+  }
 }
 
 void _getIndex(Request &req, Response &res)
@@ -339,6 +366,11 @@ void OXRS_Rack32::setMqttTopicPrefix(const char * prefix)
 void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
 {
   _mqtt.setTopicSuffix(suffix);
+}
+
+void OXRS_Rack32::setDeviceConfig(JsonObject json)
+{
+  _deviceConfig = json;
 }
 
 void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
