@@ -65,7 +65,7 @@ boolean _formatFS()
   Serial.println(F("done"));
   return true;
 #else
-  return true;
+  return false;
 #endif
 }
 
@@ -124,7 +124,7 @@ boolean _saveJson(DynamicJsonDocument * json, const char * filename)
   Serial.println(F(" bytes written"));
   return true;
 #else
-  return true;
+  return false;
 #endif
 }
 
@@ -144,7 +144,7 @@ boolean _deleteFile(const char * filename)
   Serial.println(F("done"));
   return true;
 #endif
-  return true;
+  return false;
 }
 
 /* REST API handlers */
