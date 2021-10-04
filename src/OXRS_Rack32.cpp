@@ -73,9 +73,9 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
 void _mountFS()
 {
   Serial.print(F("[file] mounting SPIFFS..."));
-  if (!SPIFFS.begin())
+  if (!SPIFFS.begin(true))
   { 
-    Serial.println(F("failed, might need formatting?"));
+    Serial.println(F("failed"));
     return; 
   }
   Serial.println(F("done"));
