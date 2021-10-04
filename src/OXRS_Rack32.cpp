@@ -40,7 +40,7 @@ const char * _fwMakerCode;
 const char * _fwVersion;
 
 // Supported device config
-JsonObject _deviceConfig;
+DynamicJsonDocument _deviceConfig(2048);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -58,9 +58,9 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
 {
   if (src.is<JsonObject>())
   {
-    for (JsonPair kvp : src.as<JsonObject>())
+    for (auto kvp : src.as<JsonObjectConst>())
     {
-      _mergeJson(dst.getOrAddMember(kvp.key().c_str()), kvp.value());
+      _mergeJson(dst.getOrAddMember(kvp.key()), kvp.value());
     }
   }
   else
@@ -190,10 +190,9 @@ void _getConfigJson(JsonObject * json)
   temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
 
   // Merge any device config
-  for (JsonPair kvp : _deviceConfig)
+  for (auto kvp : _deviceConfig.as<JsonObject>())
   {
-    Serial.println(kvp.key().c_str());
-    json->getOrAddMember(kvp.key().c_str()).set(kvp.value());
+    _mergeJson(json->getOrAddMember(kvp.key()), kvp.value());
   }
 }
 
@@ -370,7 +369,7 @@ void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
 
 void OXRS_Rack32::setDeviceConfig(JsonObject json)
 {
-  _deviceConfig = json;
+  _mergeJson(_deviceConfig.as<JsonVariant>(), json);
 }
 
 void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
