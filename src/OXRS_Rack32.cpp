@@ -40,7 +40,7 @@ const char * _fwMakerCode;
 const char * _fwVersion;
 
 // Supported device config
-DynamicJsonDocument _deviceConfig(2048);
+DynamicJsonDocument _deviceConfig(4096);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -200,7 +200,7 @@ void _getIndex(Request &req, Response &res)
 {
   Serial.println(F("[api ] index"));
 
-  DynamicJsonDocument json(512);
+  DynamicJsonDocument json(4096);
   
   JsonObject firmware = json.createNestedObject("firmware");
   _getFirmwareJson(&firmware);
@@ -287,7 +287,7 @@ void _mqttConnected()
   _screen.show_mqtt_connection_status(true);
   
   // Build device adoption info
-  DynamicJsonDocument json(512);
+  DynamicJsonDocument json(4096);
   
   JsonObject firmware = json.createNestedObject("firmware");
   _getFirmwareJson(&firmware);
