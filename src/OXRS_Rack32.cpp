@@ -39,6 +39,9 @@ const char * _fwShortName;
 const char * _fwMaker;
 const char * _fwVersion;
 
+// Supported device config
+DynamicJsonDocument _deviceConfig(4096);
+
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
 jsonCallback _onCommand;
@@ -50,13 +53,29 @@ jsonCallback _onCommand;
 //          you might see event detection/processing interrupted
 uint32_t _temp_update_ms = DEFAULT_TEMP_UPDATE_MS;
 
+/* JSON helpers */
+void _mergeJson(JsonVariant dst, JsonVariantConst src)
+{
+  if (src.is<JsonObject>())
+  {
+    for (auto kvp : src.as<JsonObjectConst>())
+    {
+      _mergeJson(dst.getOrAddMember(kvp.key()), kvp.value());
+    }
+  }
+  else
+  {
+    dst.set(src);
+  }
+}
+
 /* File system helpers */
 void _mountFS()
 {
   Serial.print(F("[file] mounting SPIFFS..."));
-  if (!SPIFFS.begin())
+  if (!SPIFFS.begin(true))
   { 
-    Serial.println(F("failed, might need formatting?"));
+    Serial.println(F("failed"));
     return; 
   }
   Serial.println(F("done"));
@@ -162,17 +181,35 @@ void _getNetworkJson(JsonObject * json)
   json->getOrAddMember("mac").set(mac_display);
 }
 
-void _getIndex(Request &req, Response &res)
+void _getDeviceConfigJson(JsonObject * json)
 {
-  Serial.println(F("[api ] index"));
+  // Add Rack32 specific config
+  JsonObject temperatureUpdateMillis = json->createNestedObject("temperatureUpdateMillis");
+  
+  temperatureUpdateMillis.getOrAddMember("type").set("long");
+  temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
 
-  DynamicJsonDocument json(512);
+  // Merge any device config from the firmware
+  for (auto kvp : _deviceConfig.as<JsonObject>())
+  {
+    _mergeJson(json->getOrAddMember(kvp.key()), kvp.value());
+  }
+}
+
+void _getAdopt(Request &req, Response &res)
+{
+  Serial.println(F("[api ] /adopt [get]"));
+
+  DynamicJsonDocument json(4096);
   
   JsonObject firmware = json.createNestedObject("firmware");
   _getFirmwareJson(&firmware);
 
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
+  
+  JsonObject deviceConfig = json.createNestedObject("deviceConfig");
+  _getDeviceConfigJson(&deviceConfig);
   
   JsonObject mqtt = json.createNestedObject("mqtt");
   _mqtt.getJson(&mqtt);
@@ -183,7 +220,7 @@ void _getIndex(Request &req, Response &res)
 
 void _postReboot(Request &req, Response &res)
 {
-  Serial.println(F("[api ] reboot"));
+  Serial.println(F("[api ] /reboot [post]"));
 
   // Restart the device
   res.sendStatus(204);
@@ -192,7 +229,7 @@ void _postReboot(Request &req, Response &res)
 
 void _postFactoryReset(Request &req, Response &res)
 {
-  Serial.print(F("[api ] factory reset"));
+  Serial.print(F("[api ] /factoryReset [post]"));
 
   DynamicJsonDocument json(64);
   deserializeJson(json, req);
@@ -223,7 +260,7 @@ void _postFactoryReset(Request &req, Response &res)
 
 void _postMqtt(Request &req, Response &res)
 {
-  Serial.println(F("[api ] update MQTT settings"));
+  Serial.println(F("[api ] /mqtt [post]"));
 
   DynamicJsonDocument json(2048);
   deserializeJson(json, req);
@@ -249,8 +286,8 @@ void _mqttConnected()
   // Update screen
   _screen.show_mqtt_connection_status(true);
   
-  // Build device discovery details
-  DynamicJsonDocument json(512);
+  // Build device adoption info
+  DynamicJsonDocument json(4096);
   
   JsonObject firmware = json.createNestedObject("firmware");
   _getFirmwareJson(&firmware);
@@ -258,14 +295,11 @@ void _mqttConnected()
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
 
-  // Publish device discovery details (retained)
-  char topic[64];
+  JsonObject deviceConfig = json.createNestedObject("deviceConfig");
+  _getDeviceConfigJson(&deviceConfig);
 
-  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "firmware");
-  _mqtt.publish(firmware, topic, true);
-  
-  sprintf_P(topic, PSTR("%s/%s"), _mqtt.getStatusTopic(topic), "network");
-  _mqtt.publish(network, topic, true);
+  // Publish device adoption info
+  _mqtt.publishAdopt(json.as<JsonObject>());
 }
 
 void _mqttDisconnected() 
@@ -331,6 +365,11 @@ void OXRS_Rack32::setMqttTopicPrefix(const char * prefix)
 void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
 {
   _mqtt.setTopicSuffix(suffix);
+}
+
+void OXRS_Rack32::setDeviceConfig(JsonObject json)
+{
+  _mergeJson(_deviceConfig.as<JsonVariant>(), json);
 }
 
 void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
@@ -507,6 +546,9 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   _mqtt.onConfig(_mqttConfig);
   _mqtt.onCommand(_mqttCommand);
 
+  // Set the max buffer size so we can handle large messages
+  _mqttClient.setBufferSize(MQTT_MAX_MESSAGE_SIZE);
+  
   // Start listening for MQTT messages
   _mqttClient.setCallback(_mqttCallback);
 }
@@ -516,8 +558,8 @@ void OXRS_Rack32::_initialiseRestApi(void)
   Serial.print(F("[api ] listening on :"));
   Serial.println(REST_API_PORT);
 
-  Serial.println(F("[api ] adding / handler [get]"));
-  _api.get("/", &_getIndex);
+  Serial.println(F("[api ] adding /adopt handler [get]"));
+  _api.get("/adopt", &_getAdopt);
   
   Serial.println(F("[api ] adding /reboot handler [post]"));
   _api.post("/reboot", &_postReboot);

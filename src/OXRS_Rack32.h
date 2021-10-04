@@ -18,6 +18,9 @@
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
+// MQTT
+#define       MQTT_MAX_MESSAGE_SIZE     4096
+
 // REST API
 #define       REST_API_PORT             8080
 
@@ -37,12 +40,15 @@ class OXRS_Rack32
 {
   public:
     OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion);
-   
+
     void setMqttBroker(const char * broker, uint16_t port);
     void setMqttAuth(const char * username, const char * password);
     void setMqttClientId(const char * clientId);
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
+
+    // Firmware can define what config options it supports - for device discovery and adoption
+    void setDeviceConfig(JsonObject json);
 
     void setDisplayPorts(uint8_t mcp23017s, int layout);
     void updateDisplayPorts(uint8_t mcp23017, uint16_t ioValue);
