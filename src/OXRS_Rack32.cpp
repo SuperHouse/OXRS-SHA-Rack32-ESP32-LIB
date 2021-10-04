@@ -36,8 +36,7 @@ Adafruit_MCP9808 _tempSensor;
 // Firmware details
 const char * _fwName;
 const char * _fwShortName;
-const char * _fwMakerCode;
-const char * _fwMakerName;
+const char * _fwMaker;
 const char * _fwVersion;
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
@@ -147,7 +146,7 @@ void _getFirmwareJson(JsonObject * json)
 {
   json->getOrAddMember("name").set(_fwName);
   json->getOrAddMember("shortName").set(_fwShortName);
-  json->getOrAddMember("makerCode").set(_fwMakerCode);
+  json->getOrAddMember("maker").set(_fwMaker);
   json->getOrAddMember("version").set(_fwVersion);
 }
 
@@ -301,12 +300,11 @@ void _mqttCallback(char * topic, byte * payload, int length)
 }
 
 /* Main program */
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMakerCode, const char * fwMakerName, const char * fwVersion)
+OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion)
 {
   _fwName       = fwName;
   _fwShortName  = fwShortName;
-  _fwMakerCode  = fwMakerCode;
-  _fwMakerName  = fwMakerName;
+  _fwMaker      = fwMaker;
   _fwVersion    = fwVersion;  
 }
 
@@ -356,8 +354,8 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println();
   Serial.println(F("==============================="));
-  Serial.print(F(  "          OXRS by "));
-  Serial.println(_fwMakerCode);
+  Serial.print(F(  "OXRS by "));
+  Serial.println(_fwMaker);
   Serial.println(_fwName);
   Serial.print  (F("             v"));
   Serial.println(_fwVersion);
@@ -370,7 +368,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _screen.begin();
 
   // Display firmware details
-  _screen.draw_header(_fwMakerCode, _fwMakerName, _fwShortName, _fwVersion, "ESP32");
+  _screen.draw_header(_fwMaker, _fwShortName, _fwVersion, "ESP32");
 
   // Mount the file system
   _mountFS();
