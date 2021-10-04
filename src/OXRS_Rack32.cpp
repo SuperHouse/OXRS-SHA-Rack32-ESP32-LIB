@@ -181,7 +181,7 @@ void _getNetworkJson(JsonObject * json)
   json->getOrAddMember("mac").set(mac_display);
 }
 
-void _getConfigJson(JsonObject * json)
+void _getDeviceConfigJson(JsonObject * json)
 {
   // Add Rack32 specific config
   JsonObject temperatureUpdateMillis = json->createNestedObject("temperatureUpdateMillis");
@@ -189,16 +189,16 @@ void _getConfigJson(JsonObject * json)
   temperatureUpdateMillis.getOrAddMember("type").set("long");
   temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
 
-  // Merge any device config
+  // Merge any device config from the firmware
   for (auto kvp : _deviceConfig.as<JsonObject>())
   {
     _mergeJson(json->getOrAddMember(kvp.key()), kvp.value());
   }
 }
 
-void _getIndex(Request &req, Response &res)
+void _getAdopt(Request &req, Response &res)
 {
-  Serial.println(F("[api ] index"));
+  Serial.println(F("[api ] /adopt [get]"));
 
   DynamicJsonDocument json(4096);
   
@@ -208,8 +208,8 @@ void _getIndex(Request &req, Response &res)
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
   
-  JsonObject config = json.createNestedObject("config");
-  _getConfigJson(&config);
+  JsonObject deviceConfig = json.createNestedObject("deviceConfig");
+  _getDeviceConfigJson(&deviceConfig);
   
   JsonObject mqtt = json.createNestedObject("mqtt");
   _mqtt.getJson(&mqtt);
@@ -220,7 +220,7 @@ void _getIndex(Request &req, Response &res)
 
 void _postReboot(Request &req, Response &res)
 {
-  Serial.println(F("[api ] reboot"));
+  Serial.println(F("[api ] /reboot [post]"));
 
   // Restart the device
   res.sendStatus(204);
@@ -229,7 +229,7 @@ void _postReboot(Request &req, Response &res)
 
 void _postFactoryReset(Request &req, Response &res)
 {
-  Serial.print(F("[api ] factory reset"));
+  Serial.print(F("[api ] /factoryReset [post]"));
 
   DynamicJsonDocument json(64);
   deserializeJson(json, req);
@@ -260,7 +260,7 @@ void _postFactoryReset(Request &req, Response &res)
 
 void _postMqtt(Request &req, Response &res)
 {
-  Serial.println(F("[api ] update MQTT settings"));
+  Serial.println(F("[api ] /mqtt [post]"));
 
   DynamicJsonDocument json(2048);
   deserializeJson(json, req);
@@ -295,8 +295,8 @@ void _mqttConnected()
   JsonObject network = json.createNestedObject("network");
   _getNetworkJson(&network);
 
-  JsonObject config = json.createNestedObject("config");
-  _getConfigJson(&config);
+  JsonObject deviceConfig = json.createNestedObject("deviceConfig");
+  _getDeviceConfigJson(&deviceConfig);
 
   // Publish device adoption info
   _mqtt.publishAdopt(json.as<JsonObject>());
@@ -558,8 +558,8 @@ void OXRS_Rack32::_initialiseRestApi(void)
   Serial.print(F("[api ] listening on :"));
   Serial.println(REST_API_PORT);
 
-  Serial.println(F("[api ] adding / handler [get]"));
-  _api.get("/", &_getIndex);
+  Serial.println(F("[api ] adding /adopt handler [get]"));
+  _api.get("/adopt", &_getAdopt);
   
   Serial.println(F("[api ] adding /reboot handler [post]"));
   _api.post("/reboot", &_postReboot);
