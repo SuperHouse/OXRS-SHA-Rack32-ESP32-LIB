@@ -420,14 +420,14 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   // Start the I2C bus
   Wire.begin();
 
+  // Mount the file system
+  _mountFS();
+
   // Set up the screen
   _screen.begin();
 
   // Display firmware details
   _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32");
-
-  // Mount the file system
-  _mountFS();
 
   // Set up ethernet and obtain an IP address
   byte mac[6];
