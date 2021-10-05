@@ -368,7 +368,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _screen.begin();
 
   // Display firmware details
-  _screen.draw_header(_fwMaker, _fwShortName, _fwVersion, "ESP32");
+  _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32");
 
   // Mount the file system
   _mountFS();
