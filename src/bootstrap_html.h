@@ -86,7 +86,7 @@ function scheduleUpdateMqttConnectionStatus(time)
   // Reschedule the timer
   updateMqttConnectionStatusTimer = setTimeout(function ()
   { 
-    updateMqttConnectionStatus(false);
+    updateMqttConnectionStatus();
   }, time);
 }
 
@@ -169,14 +169,14 @@ function handleFormSubmit(event)
 function updateMqttConnectionStatus()
 {
   fetch('/mqtt')
-    .then(response => 
+    .then(response =>
     {
       if (!response.ok) 
         throw new Error("Device response was not ok");
 
       return response.json();
     })
-    .then(data => 
+    .then(data =>
     {
       if (data.connected === true)
       {
@@ -191,8 +191,8 @@ function updateMqttConnectionStatus()
     })
     .catch(error =>
     {
-      handleError(error);
-      return false;
+      document.getElementById("state-text").style.background = "red";
+      document.getElementById("state-text").innerHTML = "OFFLINE";
     });
 
   // Reschedule a connection status check every 5 secs
