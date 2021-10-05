@@ -4,6 +4,7 @@
 
 #include "Arduino.h"
 #include "OXRS_Rack32.h"
+#include "bootstrap_html.h"
 
 #include <Wire.h>                     // For I2C
 #include <Ethernet.h>                 // For networking
@@ -196,6 +197,14 @@ void _getDeviceConfigJson(JsonObject * json)
   }
 }
 
+void _getBootstrap(Request &req, Response &res)
+{
+  Serial.println(F("[api ] / [get]"));
+
+  res.set("Content-Type", "text/html");
+  res.print(BOOTSTRAP_HTML);
+}
+
 void _getAdopt(Request &req, Response &res)
 {
   Serial.println(F("[api ] /adopt [get]"));
@@ -211,11 +220,8 @@ void _getAdopt(Request &req, Response &res)
   JsonObject deviceConfig = json.createNestedObject("deviceConfig");
   _getDeviceConfigJson(&deviceConfig);
   
-  JsonObject mqtt = json.createNestedObject("mqtt");
-  _mqtt.getJson(&mqtt);
-  
   res.set("Content-Type", "application/json");
-  serializeJson(json, req);
+  serializeJson(json, res);
 }
 
 void _postReboot(Request &req, Response &res)
@@ -229,7 +235,7 @@ void _postReboot(Request &req, Response &res)
 
 void _postFactoryReset(Request &req, Response &res)
 {
-  Serial.print(F("[api ] /factoryReset [post]"));
+  Serial.println(F("[api ] /factoryReset [post]"));
 
   DynamicJsonDocument json(64);
   deserializeJson(json, req);
@@ -237,7 +243,6 @@ void _postFactoryReset(Request &req, Response &res)
   // Factory reset - either wiping setup/config data only or format file system
   if (json.isNull() || !json["formatFileSystem"].as<boolean>())
   {
-    Serial.println(F(" (delete settings)"));
     if (!_deleteFile(MQTT_JSON_FILENAME))
     {
       res.sendStatus(500);
@@ -246,7 +251,6 @@ void _postFactoryReset(Request &req, Response &res)
   }
   else
   {
-    Serial.println(F(" (format file system)"));
     if (!_formatFS())
     {
       res.sendStatus(500);
@@ -256,6 +260,19 @@ void _postFactoryReset(Request &req, Response &res)
 
   // Restart the device
   _postReboot(req, res);
+}
+
+void _getMqtt(Request &req, Response &res)
+{
+  Serial.println(F("[api ] /mqtt [get]"));
+
+  DynamicJsonDocument json(2048);
+  
+  JsonObject mqtt = json.createNestedObject("mqtt");
+  _mqtt.getJson(&mqtt);
+  
+  res.set("Content-Type", "application/json");
+  serializeJson(mqtt, res);
 }
 
 void _postMqtt(Request &req, Response &res)
@@ -558,6 +575,9 @@ void OXRS_Rack32::_initialiseRestApi(void)
   Serial.print(F("[api ] listening on :"));
   Serial.println(REST_API_PORT);
 
+  Serial.println(F("[api ] adding / handler [get]"));
+  _api.get("/", &_getBootstrap);
+  
   Serial.println(F("[api ] adding /adopt handler [get]"));
   _api.get("/adopt", &_getAdopt);
   
@@ -566,6 +586,9 @@ void OXRS_Rack32::_initialiseRestApi(void)
 
   Serial.println(F("[api ] adding /factoryReset handler [post]"));
   _api.post("/factoryReset", &_postFactoryReset);
+
+  Serial.println(F("[api ] adding /mqtt handler [get]"));
+  _api.get("/mqtt", &_getMqtt);
 
   Serial.println(F("[api ] adding /mqtt handler [post]"));
   _api.post("/mqtt", &_postMqtt);

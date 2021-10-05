@@ -22,7 +22,7 @@
 #define       MQTT_MAX_MESSAGE_SIZE     4096
 
 // REST API
-#define       REST_API_PORT             8080
+#define       REST_API_PORT             80
 
 // Temperature update internal
 #define       DEFAULT_TEMP_UPDATE_MS    60000
