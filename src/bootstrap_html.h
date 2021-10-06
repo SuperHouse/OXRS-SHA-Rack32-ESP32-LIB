@@ -48,6 +48,9 @@ const char BOOTSTRAP_HTML[] PROGMEM = R"rawliteral(
   <label for="mqtt-port">Port:</label>
   <input type="text" name="port" id="mqtt-port" value="1883">
 
+  <label for="mqtt-clientid">Client ID:</label>
+  <input type="text" name="clientId" id="mqtt-clientid">
+
   <label for="mqtt-username">Username:</label>
   <input type="text" name="username" id="mqtt-username">
 
@@ -104,6 +107,7 @@ function handleBodyLoad()
     {
       document.getElementById('mqtt-broker').value = data.broker;
       document.getElementById('mqtt-port').value = data.port;
+      document.getElementById('mqtt-clientid').value = data.clientId;
       document.getElementById('mqtt-username').value = data.username;
       document.getElementById('mqtt-topic-prefix').value = data.topicPrefix;
       document.getElementById('mqtt-topic-suffix').value = data.topicSuffix;
@@ -126,10 +130,16 @@ function handleFormSubmit(event)
 {
   event.preventDefault();
 
-  // Validate input fields (broker mandatory, password mandatory if username set)
+  // Validate input fields
   if (document.getElementById('mqtt-broker').value == "")
   {
     alert('Broker hostname or IP address is mandatory');
+    return false;
+  }
+  
+  if (document.getElementById('mqtt-clientid').value == "")
+  {
+    alert('Client ID is mandatory');
     return false;
   }
   
