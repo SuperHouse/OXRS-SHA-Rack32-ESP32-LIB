@@ -65,7 +65,7 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
   }
 }
 
-/* REST API handlers */
+/* MQTT adoption info builders */
 void _getFirmwareJson(JsonObject * json)
 {
   json->getOrAddMember("name").set(_fwName);
@@ -140,12 +140,13 @@ void _mqttConfig(JsonObject json)
     _temp_update_ms = json["temperatureUpdateMillis"].as<uint32_t>();
   }
   
+  // Pass on to our parents callback
   if (_onConfig) { _onConfig(json); }
 }
 
 void _mqttCommand(JsonObject json)
 {
-  // Any Rack32 commands can be handled in here
+  // Pass on to our parents callback
   if (_onCommand) { _onCommand(json); }
 }
 
@@ -154,7 +155,7 @@ void _mqttCallback(char * topic, byte * payload, int length)
   // Update screen
   _screen.trigger_mqtt_rx_led();
 
-  // Pass this message down to our MQTT handler
+  // Pass down to our MQTT handler
   _mqtt.receive(topic, payload, length);
 }
 
@@ -209,8 +210,7 @@ void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
 
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
-  // We wrap the callbacks so we can intercept messages intended for 
-  // the Rack32 specifically - store here for use in the wrappers
+  // We wrap the callbacks so we can intercept messages intended for the Rack32
   _onConfig = config;
   _onCommand = command;
   
@@ -254,7 +254,7 @@ void OXRS_Rack32::loop()
     // Maintain our DHCP lease
     Ethernet.maintain();
     
-    // Maintain MQTT (process any messages)
+    // Handle any MQTT messages
     _mqtt.loop();
     
     // Handle any REST API requests
@@ -262,7 +262,7 @@ void OXRS_Rack32::loop()
     _api.checkEthernet(&client);
   }
     
-  // Maintain screen
+  // Update screen
   _screen.loop();
 
   // Check for temperature update
@@ -337,6 +337,9 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
 
 void OXRS_Rack32::_initialiseMqtt(byte * mac)
 {
+  // NOTE: this must be called *before* initialising the REST API since
+  //       that will load MQTT config from file, which has precendence
+
   // Set the default client ID to last 3 bytes of the MAC address
   char clientId[32];
   sprintf_P(clientId, PSTR("%02x%02x%02x"), mac[3], mac[4], mac[5]);  
@@ -357,12 +360,14 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
 
 void OXRS_Rack32::_initialiseRestApi(void)
 {
+  // NOTE: this must be called *after* initialising MQTT since that sets
+  //       the default client id, which has lower precendence than MQTT
+  //       settings stored in file and loaded by the API
+
   Serial.print(F("[ra32] starting api on :"));
   Serial.println(REST_API_PORT);
 
-  // Set up the REST API server (this will load MQTT settings
-  // from SPIFFS so should be called after _initialiseMqtt()
-  // otherwise the clientId might be overridden)
+  // Set up the REST API
   _api.begin();  
 }
 
