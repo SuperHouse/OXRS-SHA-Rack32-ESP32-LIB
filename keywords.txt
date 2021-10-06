@@ -9,9 +9,12 @@ OXRS_Rack32	KEYWORD1
 #######################################
 
 setMqttBroker		KEYWORD2
+setMqttClientId	KEYWORD2
 setMqttAuth		KEYWORD2
 setMqttTopicPrefix	KEYWORD2
 setMqttTopicSuffix	KEYWORD2
+
+setDeviceConfig	KEYWORD2
 
 setDisplayPorts	KEYWORD2
 updateDisplayPorts	KEYWORD2
