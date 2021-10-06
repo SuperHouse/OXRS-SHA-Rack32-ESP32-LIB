@@ -7,7 +7,7 @@
 
 #include <OXRS_MQTT.h>                // For MQTT pub/sub
 #include <OXRS_LCD.h>                 // For LCD runtime displays
-#include <ArduinoJson.h>
+#include <OXRS_API.h>                 // For REST API
 
 // Serial
 #define       SERIAL_BAUD_RATE          115200
@@ -41,9 +41,11 @@ class OXRS_Rack32
   public:
     OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion);
 
+    // These are only needed if performing manual configuration in your sketch, otherwise
+    // config is provisioned via the API and bootstrap page
     void setMqttBroker(const char * broker, uint16_t port);
-    void setMqttAuth(const char * username, const char * password);
     void setMqttClientId(const char * clientId);
+    void setMqttAuth(const char * username, const char * password);
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
 
@@ -63,8 +65,8 @@ class OXRS_Rack32
     void _initialiseEthernet(byte * mac);
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
-    
     void _initialiseTempSensor(void);
+
     void _updateTempSensor(void);
     uint32_t _lastTempUpdate;
 };
