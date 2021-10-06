@@ -300,7 +300,10 @@ void _postMqtt(Request &req, Response &res)
 /* MQTT callbacks */
 void _mqttConnected() 
 {
+  char topic[64];
+
   // Update screen
+  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
   _screen.show_mqtt_connection_status(true);
   
   // Build device adoption info
@@ -322,6 +325,7 @@ void _mqttConnected()
 void _mqttDisconnected() 
 {
   // Update screen
+  _screen.show_MQTT_topic("");
   _screen.show_mqtt_connection_status(false);
 }
 
@@ -552,10 +556,6 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
     _mqtt.setJson(&mqtt);
     Serial.println(F("done"));
   }
-
-  // Display the MQTT topic
-  char topic[64];
-  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
 
   // Register our callbacks
   _mqtt.onConnected(_mqttConnected);
