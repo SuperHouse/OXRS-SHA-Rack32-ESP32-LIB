@@ -20,7 +20,7 @@ PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
 
 // LCD screen
-OXRS_LCD _screen(Ethernet);
+OXRS_LCD _screen(Ethernet, _mqtt);
 
 // REST API
 EthernetServer _server(REST_API_PORT);
@@ -104,12 +104,6 @@ void _getDeviceConfigJson(JsonObject * json)
 /* MQTT callbacks */
 void _mqttConnected() 
 {
-  char topic[64];
-
-  // Update screen
-  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
-  _screen.show_mqtt_connection_status(true);
-  
   // Build device adoption info
   DynamicJsonDocument json(4096);
   
@@ -124,15 +118,6 @@ void _mqttConnected()
 
   // Publish device adoption info
   _mqtt.publishAdopt(json.as<JsonObject>());
-}
-
-void _mqttDisconnected() 
-{
-  char topic[64];
-
-  // Update screen
-  _screen.show_MQTT_topic(_mqtt.getWildcardTopic(topic));
-  _screen.show_mqtt_connection_status(false);
 }
 
 void _mqttConfig(JsonObject json)
@@ -349,13 +334,9 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   
   // Register our callbacks
   _mqtt.onConnected(_mqttConnected);
-  _mqtt.onDisconnected(_mqttDisconnected);
   _mqtt.onConfig(_mqttConfig);
   _mqtt.onCommand(_mqttCommand);
   
-  // Initialise an empty MQTT topic display
-  _screen.show_MQTT_topic("");
-
   // Set the max buffer size so we can handle large messages
   _mqttClient.setBufferSize(MQTT_MAX_MESSAGE_SIZE);
   
