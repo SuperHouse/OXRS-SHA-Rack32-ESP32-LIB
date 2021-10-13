@@ -30,11 +30,12 @@ OXRS_API _api(_mqtt);
 Adafruit_MCP9808 _tempSensor;
 
 // Firmware details
-const char * _fwName;
-const char * _fwShortName;
-const char * _fwMaker;
-const char * _fwVersion;
-
+const char *    _fwName;
+const char *    _fwShortName;
+const char *    _fwMaker;
+const char *    _fwVersion;
+const uint8_t * _fwLogo;
+ 
 // Supported device config
 DynamicJsonDocument _deviceConfig(4096);
 
@@ -147,12 +148,13 @@ void _mqttCallback(char * topic, byte * payload, int length)
 }
 
 /* Main program */
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion)
+OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion, const uint8_t * fwLogo)
 {
   _fwName       = fwName;
   _fwShortName  = fwShortName;
   _fwMaker      = fwMaker;
-  _fwVersion    = fwVersion;  
+  _fwVersion    = fwVersion;
+  _fwLogo       = fwLogo;
 }
 
 void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
@@ -217,7 +219,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _screen.begin();
 
   // Display firmware details
-  _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32");
+  _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
 
   // Set up ethernet and obtain an IP address
   byte mac[6];
