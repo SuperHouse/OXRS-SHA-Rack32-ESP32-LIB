@@ -39,7 +39,12 @@
 class OXRS_Rack32
 {
   public:
-    OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion);
+    OXRS_Rack32(
+      const char * fwName, 
+      const char * fwShortName, 
+      const char * fwMaker, 
+      const char * fwVersion, 
+      const uint8_t * fwLogo = NULL);
 
     // These are only needed if performing manual configuration in your sketch, otherwise
     // config is provisioned via the API and bootstrap page
