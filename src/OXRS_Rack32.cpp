@@ -30,14 +30,15 @@ OXRS_API _api(_mqtt);
 Adafruit_MCP9808 _tempSensor;
 
 // Firmware details
+const char *    _libName = "OXRS-SHA-Rack32-ESP32-LIB";
 const char *    _fwName;
 const char *    _fwShortName;
 const char *    _fwMaker;
 const char *    _fwVersion;
 const uint8_t * _fwLogo;
  
-// Supported device config
-DynamicJsonDocument _deviceConfig(4096);
+// Supported firmware config schema
+DynamicJsonDocument _fwConfigSchema(2048);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -67,15 +68,17 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
 }
 
 /* MQTT adoption info builders */
-void _getFirmwareJson(JsonObject * json)
+void _getFirmwareJson(JsonVariant json)
 {
-  json->getOrAddMember("name").set(_fwName);
-  json->getOrAddMember("shortName").set(_fwShortName);
-  json->getOrAddMember("maker").set(_fwMaker);
-  json->getOrAddMember("version").set(_fwVersion);
+  JsonObject firmware = json.createNestedObject("firmware");
+
+  firmware["name"] = _fwName;
+  firmware["shortName"] = _fwShortName;
+  firmware["maker"] = _fwMaker;
+  firmware["version"] = _fwVersion;
 }
 
-void _getNetworkJson(JsonObject * json)
+void _getNetworkJson(JsonVariant json)
 {
   byte mac[6];
   Ethernet.MACAddress(mac);
@@ -83,22 +86,42 @@ void _getNetworkJson(JsonObject * json)
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-  json->getOrAddMember("ip").set(Ethernet.localIP());
-  json->getOrAddMember("mac").set(mac_display);
+  JsonObject network = json.createNestedObject("network");
+
+  network["ip"] = Ethernet.localIP();
+  network["mac"] = mac_display;
 }
 
-void _getDeviceConfigJson(JsonObject * json)
+void _getConfigJson(JsonVariant json)
 {
-  // Add Rack32 specific config
-  JsonObject temperatureUpdateMillis = json->createNestedObject("temperatureUpdateMillis");
+  JsonObject config = json.createNestedObject("config");
   
-  temperatureUpdateMillis.getOrAddMember("type").set("long");
-  temperatureUpdateMillis.getOrAddMember("description").set("Set temperature update interval, zero to disable updates");
+  // Config schema metadata
+  config["$schema"] = "http://json-schema.org/draft-04/schema#";
+  config["description"] = _fwName;
+  config["type"] = "object";
 
-  // Merge any device config from the firmware
-  for (auto kvp : _deviceConfig.as<JsonObject>())
+  JsonObject properties = config.createNestedObject("properties");
+
+  // Rack32 config
+  JsonObject rack32Config = properties.createNestedObject(_libName);
+  rack32Config["type"] = "object";
+  
+  JsonObject rack32Properties = rack32Config.createNestedObject("properties");
+
+  JsonObject temperatureUpdateMillis = rack32Properties.createNestedObject("temperatureUpdateMillis");
+  temperatureUpdateMillis["type"] = "integer";
+  temperatureUpdateMillis["minimum"] = 0;
+
+  // Firmware config (if any)
+  if (!_fwConfigSchema.isNull())
   {
-    _mergeJson(json->getOrAddMember(kvp.key()), kvp.value());
+    JsonObject fwConfig = properties.createNestedObject(_fwName);
+    
+    for (auto kvp : _fwConfigSchema.as<JsonObject>())
+    {
+      _mergeJson(fwConfig.getOrAddMember(kvp.key()), kvp.value());
+    }
   }
 }
 
@@ -108,33 +131,39 @@ void _mqttConnected()
   // Build device adoption info
   DynamicJsonDocument json(4096);
   
-  JsonObject firmware = json.createNestedObject("firmware");
-  _getFirmwareJson(&firmware);
-
-  JsonObject network = json.createNestedObject("network");
-  _getNetworkJson(&network);
-
-  JsonObject deviceConfig = json.createNestedObject("deviceConfig");
-  _getDeviceConfigJson(&deviceConfig);
+  JsonVariant adopt = json.as<JsonVariant>();
+  
+  _getFirmwareJson(adopt);
+  _getNetworkJson(adopt);
+  _getConfigJson(adopt);
 
   // Publish device adoption info
-  _mqtt.publishAdopt(json.as<JsonObject>());
+  _mqtt.publishAdopt(adopt);
 }
 
-void _mqttConfig(JsonObject json)
+void _mqttConfig(JsonVariant json)
 {
-  if (json.containsKey("temperatureUpdateMillis"))
+  // Check for library config
+  if (json.containsKey(_libName))
   {
-    _temp_update_ms = json["temperatureUpdateMillis"].as<uint32_t>();
+    if (json[_libName].containsKey("temperatureUpdateMillis"))
+    {
+      _temp_update_ms = json[_libName]["temperatureUpdateMillis"].as<uint32_t>();
+    }
   }
   
-  // Pass on to our parents callback
-  if (_onConfig) { _onConfig(json); }
+  // Check for firmware config and pass on to the callback
+  if (json.containsKey(_fwName) && _onConfig)
+  {
+    _onConfig(json[_fwName].as<JsonVariant>());
+  }
 }
 
-void _mqttCommand(JsonObject json)
+void _mqttCommand(JsonVariant json)
 {
-  // Pass on to our parents callback
+  // TODO: should we have a command schema and have the same keys as we do for config?
+  
+  // Pass on to the firmware callback
   if (_onCommand) { _onCommand(json); }
 }
 
@@ -182,9 +211,9 @@ void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
   _mqtt.setTopicSuffix(suffix);
 }
 
-void OXRS_Rack32::setDeviceConfig(JsonObject json)
+void OXRS_Rack32::setConfigSchema(JsonVariant json)
 {
-  _mergeJson(_deviceConfig.as<JsonVariant>(), json);
+  _mergeJson(_fwConfigSchema.as<JsonVariant>(), json);
 }
 
 void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
@@ -258,7 +287,7 @@ void OXRS_Rack32::loop()
   _updateTempSensor();
 }
 
-boolean OXRS_Rack32::publishStatus(JsonObject json)
+boolean OXRS_Rack32::publishStatus(JsonVariant json)
 {
   // Check for something we can show on the screen
   if (json.containsKey("index"))
@@ -284,7 +313,7 @@ boolean OXRS_Rack32::publishStatus(JsonObject json)
   return success;
 }
 
-boolean OXRS_Rack32::publishTelemetry(JsonObject json)
+boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
 {
   boolean success = _mqtt.publishTelemetry(json);
   if (success) { _screen.trigger_mqtt_tx_led(); }
@@ -394,9 +423,9 @@ void OXRS_Rack32::_updateTempSensor(void)
     char payload[8];
     sprintf(payload, "%2.1f", temperature);
   
-    StaticJsonDocument<64> json;
+    StaticJsonDocument<32> json;
     json["temperature"] = payload;
-    publishTelemetry(json.as<JsonObject>());
+    publishTelemetry(json.as<JsonVariant>());
 
     // Reset our timer
     _lastTempUpdate = millis();

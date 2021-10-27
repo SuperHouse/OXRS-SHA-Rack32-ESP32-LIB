@@ -14,7 +14,7 @@ setMqttAuth		KEYWORD2
 setMqttTopicPrefix	KEYWORD2
 setMqttTopicSuffix	KEYWORD2
 
-setDeviceConfig	KEYWORD2
+setConfigSchema	KEYWORD2
 
 setDisplayPorts	KEYWORD2
 updateDisplayPorts	KEYWORD2

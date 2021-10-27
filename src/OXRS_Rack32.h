@@ -54,8 +54,8 @@ class OXRS_Rack32
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
 
-    // Firmware can define what config options it supports - for device discovery and adoption
-    void setDeviceConfig(JsonObject json);
+    // Firmware can define the config options it supports - for device discovery and adoption
+    void setConfigSchema(JsonVariant json);
 
     void setDisplayPorts(uint8_t mcp23017s, int layout);
     void updateDisplayPorts(uint8_t mcp23017, uint16_t ioValue);
@@ -63,8 +63,8 @@ class OXRS_Rack32
     void begin(jsonCallback config, jsonCallback command);
     void loop(void);
 
-    boolean publishStatus(JsonObject json);
-    boolean publishTelemetry(JsonObject json);
+    boolean publishStatus(JsonVariant json);
+    boolean publishTelemetry(JsonVariant json);
 
   private:
     void _initialiseEthernet(byte * mac);
