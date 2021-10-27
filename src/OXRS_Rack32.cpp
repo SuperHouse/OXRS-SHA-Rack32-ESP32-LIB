@@ -103,26 +103,16 @@ void _getConfigJson(JsonVariant json)
 
   JsonObject properties = config.createNestedObject("properties");
 
-  // Rack32 config
-  JsonObject rack32Config = properties.createNestedObject(_libName);
-  rack32Config["type"] = "object";
-  
-  JsonObject rack32Properties = rack32Config.createNestedObject("properties");
-
-  JsonObject temperatureUpdateMillis = rack32Properties.createNestedObject("temperatureUpdateMillis");
-  temperatureUpdateMillis["type"] = "integer";
-  temperatureUpdateMillis["minimum"] = 0;
-
   // Firmware config (if any)
   if (!_fwConfigSchema.isNull())
   {
-    JsonObject fwConfig = properties.createNestedObject(_fwName);
-    
-    for (auto kvp : _fwConfigSchema.as<JsonObject>())
-    {
-      _mergeJson(fwConfig.getOrAddMember(kvp.key()), kvp.value());
-    }
+    _mergeJson(properties, _fwConfigSchema.as<JsonVariant>());
   }
+
+  // Rack32 config
+  JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
+  temperatureUpdateMillis["type"] = "integer";
+  temperatureUpdateMillis["minimum"] = 0;
 }
 
 /* MQTT callbacks */
@@ -130,7 +120,6 @@ void _mqttConnected()
 {
   // Build device adoption info
   DynamicJsonDocument json(4096);
-  
   JsonVariant adopt = json.as<JsonVariant>();
   
   _getFirmwareJson(adopt);
@@ -144,35 +133,13 @@ void _mqttConnected()
 void _mqttConfig(JsonVariant json)
 {
   // Check for library config
-  if (json.containsKey(_libName))
+  if (json.containsKey("temperatureUpdateMillis"))
   {
-    JsonVariant rack32Config = json[_libName].as<JsonVariant>();
-
-    if (rack32Config.containsKey("temperatureUpdateMillis"))
-    {
-      _temp_update_ms = rack32Config["temperatureUpdateMillis"].as<uint32_t>();
-    }
+    _temp_update_ms = json["temperatureUpdateMillis"].as<uint32_t>();
   }
   
-  // Check for firmware config and pass on to the callback
-  if (json.containsKey(_fwName) && _onConfig)
-  {
-    JsonVariant fwConfig = json[_fwName].as<JsonVariant>();
-    
-    // Check for an array and un-wind before passing down to the firmware - to save 
-    // having this logic in every piece of firmware
-    if (fwConfig.is<JsonArray>())
-    {
-      for (JsonVariant item : fwConfig.as<JsonArray>())
-      {
-        _onConfig(item);
-      }
-    }
-    else
-    {
-      _onConfig(fwConfig);
-    }
-  }
+  // Pass on to the firmware callback
+  if (_onConfig) { _onConfig(json); }
 }
 
 void _mqttCommand(JsonVariant json)
@@ -180,22 +147,7 @@ void _mqttCommand(JsonVariant json)
   // TODO: should we have a command schema and have the same keys as we do for config?
   
   // Pass on to the firmware callback
-  if (_onCommand)
-  {
-    // Check for an array and un-wind before passing down to the firmware - to save 
-    // having this logic in every piece of firmware
-    if (json.is<JsonArray>())
-    {
-      for (JsonVariant item : json.as<JsonArray>())
-      {
-        _onCommand(item);
-      }
-    }
-    else
-    {
-      _onCommand(json);
-    }
-  }
+  if (_onCommand) { _onCommand(json); }
 }
 
 void _mqttCallback(char * topic, byte * payload, int length) 
