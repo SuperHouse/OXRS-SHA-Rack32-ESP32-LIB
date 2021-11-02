@@ -30,7 +30,6 @@ OXRS_API _api(_mqtt);
 Adafruit_MCP9808 _tempSensor;
 
 // Firmware details
-const char *    _libName = "OXRS-SHA-Rack32-ESP32-LIB";
 const char *    _fwName;
 const char *    _fwShortName;
 const char *    _fwMaker;
