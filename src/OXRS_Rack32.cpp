@@ -249,8 +249,8 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 
 void OXRS_Rack32::loop()
 {
-  // Check our ethernet connection
-  if (Ethernet.linkStatus() == LinkON)
+  // Check our network connection
+  if (_isNetworkConnected())
   {
     // Maintain our DHCP lease
     Ethernet.maintain();
@@ -272,6 +272,9 @@ void OXRS_Rack32::loop()
 
 boolean OXRS_Rack32::publishStatus(JsonVariant json)
 {
+  // Exit early if no network connection
+  if (!_isNetworkConnected()) { return false; }
+
   // Check for something we can show on the screen
   if (json.containsKey("index"))
   {
@@ -298,6 +301,9 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
 
 boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
 {
+  // Exit early if no network connection
+  if (!_isNetworkConnected()) { return false; }
+
   boolean success = _mqtt.publishTelemetry(json);
   if (success) { _screen.trigger_mqtt_tx_led(); }
   return success;
@@ -413,4 +419,10 @@ void OXRS_Rack32::_updateTempSensor(void)
     // Reset our timer
     _lastTempUpdate = millis();
   }
+}
+
+boolean OXRS_Rack32::_isNetworkConnected()
+{
+  // TODO: Add check for WiFi status if we add support for WiFi
+  return Ethernet.linkStatus() == LinkON;
 }

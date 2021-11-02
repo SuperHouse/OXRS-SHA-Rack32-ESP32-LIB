@@ -74,6 +74,8 @@ class OXRS_Rack32
 
     void _updateTempSensor(void);
     uint32_t _lastTempUpdate;
+    
+    boolean _isNetworkConnected();
 };
 
 #endif
