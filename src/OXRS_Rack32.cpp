@@ -214,18 +214,6 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _onConfig = config;
   _onCommand = command;
   
-  // Startup logging to serial
-  Serial.begin(SERIAL_BAUD_RATE);
-  Serial.println();
-  Serial.println(F("==============================="));
-  Serial.println(_fwName);
-  Serial.print  (F("             v"));
-  Serial.println(_fwVersion);
-  Serial.println(F("==============================="));
-
-  // Start the I2C bus
-  Wire.begin();
-
   // Set up the screen
   _screen.begin();
 
@@ -378,6 +366,9 @@ void OXRS_Rack32::_initialiseRestApi(void)
 
 void OXRS_Rack32::_initialiseTempSensor(void)
 {
+  // Start the I2C bus
+  Wire.begin();
+
   Serial.println(F("[ra32] scanning for temperature sensor..."));
   Serial.print(F(" - 0x"));
   Serial.print(MCP9808_I2C_ADDRESS, HEX);
