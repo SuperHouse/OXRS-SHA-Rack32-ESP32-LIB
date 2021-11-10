@@ -368,6 +368,10 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   {
     _tempSensor.setResolution(MCP9808_MODE);
   }
+  else
+  {
+    Serial.println(F("[ra32] temperature sensor (MCP9808) not found"));    
+  }
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
