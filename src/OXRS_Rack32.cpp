@@ -304,7 +304,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-  Serial.print(F("[ra32] MAC address: "));
+  Serial.print(F("[ra32] mac address: "));
   Serial.println(mac_display);
 
   Ethernet.init(ETHERNET_CS_PIN);
@@ -318,7 +318,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(350);
 
-  Serial.print(F("[ra32] IP address: "));
+  Serial.print(F("[ra32] ip address:  "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     Serial.println(Ethernet.localIP());
