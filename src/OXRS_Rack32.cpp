@@ -344,9 +344,6 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   _mqtt.onConfig(_mqttConfig);
   _mqtt.onCommand(_mqttCommand);
   
-  // Set the max buffer size so we can handle large messages
-  _mqttClient.setBufferSize(MQTT_MAX_MESSAGE_SIZE);
-  
   // Start listening for MQTT messages
   _mqttClient.setCallback(_mqttCallback);
 }
