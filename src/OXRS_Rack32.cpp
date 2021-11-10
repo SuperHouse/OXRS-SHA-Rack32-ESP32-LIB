@@ -298,17 +298,18 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
 
 void OXRS_Rack32::_initialiseEthernet(byte * mac)
 {
-  Serial.print(F("[ra32] getting MAC address from ESP32..."));
   WiFi.macAddress(mac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
   mac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
 
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  Serial.print(F("[ra32] mac address: "));
   Serial.println(mac_display);
 
   Ethernet.init(ETHERNET_CS_PIN);
 
-  Serial.print("[ra32] resetting Wiznet W5500...");
+  // resetting Wiznet W5500
   pinMode(WIZNET_RESET_PIN, OUTPUT);
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(250);
@@ -316,16 +317,15 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   delay(50);
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(350);
-  Serial.println("done");
 
-  Serial.print(F("[ra32] getting IP address via DHCP..."));
+  Serial.print(F("[ra32] ip address:  "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     Serial.println(Ethernet.localIP());
   }
   else
   {
-    Serial.println(F("failed"));
+    Serial.println(F("none"));
   }
 }
 
@@ -354,9 +354,6 @@ void OXRS_Rack32::_initialiseRestApi(void)
   //       the default client id, which has lower precendence than MQTT
   //       settings stored in file and loaded by the API
 
-  Serial.print(F("[ra32] starting api on :"));
-  Serial.println(REST_API_PORT);
-
   // Set up the REST API
   _api.begin();  
 }
@@ -366,23 +363,9 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   // Start the I2C bus
   Wire.begin();
 
-  Serial.println(F("[ra32] scanning for temperature sensor..."));
-  Serial.print(F(" - 0x"));
-  Serial.print(MCP9808_I2C_ADDRESS, HEX);
-  Serial.print(F("..."));
-
-  if (_tempSensor.begin(MCP9808_I2C_ADDRESS))
-  {
-    _tempSensor.setResolution(MCP9808_MODE);
-
-    Serial.print(F("MCP9808 (mode "));
-    Serial.print(MCP9808_MODE);
-    Serial.println(F(")"));
-  }
-  else
-  {
-    Serial.println(F("not found!"));
-  }
+  // Initialise the onboard MCP9808 temp sensor
+  _tempSensor.begin(MCP9808_I2C_ADDRESS);
+  _tempSensor.setResolution(MCP9808_MODE);
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
