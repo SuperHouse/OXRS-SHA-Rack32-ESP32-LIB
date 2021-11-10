@@ -363,15 +363,9 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   // Start the I2C bus
   Wire.begin();
 
-  // Check if the temp sensor is found on the I2C bus
-  if (_tempSensor.begin(MCP9808_I2C_ADDRESS))
-  {
-    _tempSensor.setResolution(MCP9808_MODE);
-  }
-  else
-  {
-    Serial.println(F("[ra32] temperature sensor (MCP9808) not found"));    
-  }
+  // Initialise the onboard MCP9808 temp sensor
+  _tempSensor.begin(MCP9808_I2C_ADDRESS);
+  _tempSensor.setResolution(MCP9808_MODE);
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
