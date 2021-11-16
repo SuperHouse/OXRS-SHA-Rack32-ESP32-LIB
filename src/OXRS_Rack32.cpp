@@ -154,8 +154,23 @@ void _mqttCallback(char * topic, byte * payload, int length)
   // Update screen
   _screen.trigger_mqtt_rx_led();
 
-  // Pass down to our MQTT handler
-  _mqtt.receive(topic, payload, length);
+  // Pass down to our MQTT handler and check it was processed ok
+  int state = _mqtt.receive(topic, payload, length);
+  switch (state)
+  {
+    case MQTT_RECEIVE_ZERO_LENGTH:
+      Serial.println("[ra32] empty mqtt payload received");
+      break;
+    case MQTT_RECEIVE_JSON_ERROR:
+      Serial.println("[ra32] failed to deserialise mqtt json payload");
+      break;
+    case MQTT_RECEIVE_NO_CONFIG_HANDLER:
+      Serial.println("[ra32] no mqtt config handler");
+      break;
+    case MQTT_RECEIVE_NO_COMMAND_HANDLER:
+      Serial.println("[ra32] no mqtt command handler");
+      break;
+  }
 }
 
 /* Main program */
