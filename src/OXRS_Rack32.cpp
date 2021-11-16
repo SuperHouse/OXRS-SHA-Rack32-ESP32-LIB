@@ -127,6 +127,45 @@ void _mqttConnected()
 
   // Publish device adoption info
   _mqtt.publishAdopt(adopt);
+
+  // Log the fact we are now connected
+  Serial.println("[ra32] mqtt connected");
+}
+
+void _mqttDisconnected(int state) 
+{
+  // Log the disconnect reason
+  // See https://github.com/knolleary/pubsubclient/blob/2d228f2f862a95846c65a8518c79f48dfc8f188c/src/PubSubClient.h#L44
+  switch (state)
+  {
+    case MQTT_CONNECTION_TIMEOUT:
+      Serial.println("[ra32] mqtt connection timeout");
+      break;
+    case MQTT_CONNECTION_LOST:
+      Serial.println("[ra32] mqtt connection lost");
+      break;
+    case MQTT_CONNECT_FAILED:
+      Serial.println("[ra32] mqtt connect failed");
+      break;
+    case MQTT_DISCONNECTED:
+      Serial.println("[ra32] mqtt disconnected");
+      break;
+    case MQTT_CONNECT_BAD_PROTOCOL:
+      Serial.println("[ra32] mqtt bad protocol");
+      break;
+    case MQTT_CONNECT_BAD_CLIENT_ID:
+      Serial.println("[ra32] mqtt bad client id");
+      break;
+    case MQTT_CONNECT_UNAVAILABLE:
+      Serial.println("[ra32] mqtt unavailable");
+      break;
+    case MQTT_CONNECT_BAD_CREDENTIALS:
+      Serial.println("[ra32] mqtt bad credentials");
+      break;      
+    case MQTT_CONNECT_UNAUTHORIZED:
+      Serial.println("[ra32] mqtt unauthorised");
+      break;      
+  }
 }
 
 void _mqttConfig(JsonVariant json)
@@ -356,6 +395,7 @@ void OXRS_Rack32::_initialiseMqtt(byte * mac)
   
   // Register our callbacks
   _mqtt.onConnected(_mqttConnected);
+  _mqtt.onDisconnected(_mqttDisconnected);
   _mqtt.onConfig(_mqttConfig);
   _mqtt.onCommand(_mqttCommand);
   
