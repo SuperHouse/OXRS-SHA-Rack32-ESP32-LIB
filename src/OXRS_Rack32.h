@@ -61,6 +61,7 @@ class OXRS_Rack32
     boolean publishTelemetry(JsonVariant json);
 
   private:
+    void _initialiseScreen();
     void _initialiseEthernet(byte * mac);
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
