@@ -359,12 +359,16 @@ void OXRS_Rack32::_initialiseScreen(void)
   {
     case LCD_INFO_LOGO_FROM_SPIFFS:
       Serial.println(F("[ra32] logo loaded from SPIFFS"));
+      break;
     case LCD_INFO_LOGO_FROM_PROGMEM:
       Serial.println(F("[ra32] logo loaded from PROGMEM"));
+      break;
     case LCD_INFO_LOGO_DEFAULT:
       Serial.println(F("[ra32] no logo found, using default OXRS logo"));
+      break;
     case LCD_ERR_NO_LOGO:
       Serial.println(F("[ra32] no logo found"));
+      break;
   }
 }
 
