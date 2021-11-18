@@ -285,7 +285,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _initialiseTempSensor();
 }
 
-void OXRS_Rack32::loop()
+void OXRS_Rack32::loop(void)
 {
   // Check our network connection
   if (_isNetworkConnected())
@@ -347,7 +347,7 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
   return success;
 }
 
-void OXRS_Rack32::_initialiseScreen()
+void OXRS_Rack32::_initialiseScreen(void)
 {
   // Initialise the LCD
   _screen.begin();
@@ -470,7 +470,7 @@ void OXRS_Rack32::_updateTempSensor(void)
   }
 }
 
-boolean OXRS_Rack32::_isNetworkConnected()
+boolean OXRS_Rack32::_isNetworkConnected(void)
 {
   // TODO: Add check for WiFi status if we add support for WiFi
   return Ethernet.linkStatus() == LinkON;
