@@ -61,6 +61,7 @@ class OXRS_Rack32
     boolean publishTelemetry(JsonVariant json);
 
   private:
+    void _initialiseScreen(void);
     void _initialiseEthernet(byte * mac);
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
@@ -69,7 +70,7 @@ class OXRS_Rack32
     void _updateTempSensor(void);
     uint32_t _lastTempUpdate;
     
-    boolean _isNetworkConnected();
+    boolean _isNetworkConnected(void);
 };
 
 #endif

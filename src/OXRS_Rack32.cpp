@@ -139,31 +139,31 @@ void _mqttDisconnected(int state)
   switch (state)
   {
     case MQTT_CONNECTION_TIMEOUT:
-      Serial.println("[ra32] mqtt connection timeout");
+      Serial.println(F("[ra32] mqtt connection timeout"));
       break;
     case MQTT_CONNECTION_LOST:
-      Serial.println("[ra32] mqtt connection lost");
+      Serial.println(F("[ra32] mqtt connection lost"));
       break;
     case MQTT_CONNECT_FAILED:
-      Serial.println("[ra32] mqtt connect failed");
+      Serial.println(F("[ra32] mqtt connect failed"));
       break;
     case MQTT_DISCONNECTED:
-      Serial.println("[ra32] mqtt disconnected");
+      Serial.println(F("[ra32] mqtt disconnected"));
       break;
     case MQTT_CONNECT_BAD_PROTOCOL:
-      Serial.println("[ra32] mqtt bad protocol");
+      Serial.println(F("[ra32] mqtt bad protocol"));
       break;
     case MQTT_CONNECT_BAD_CLIENT_ID:
-      Serial.println("[ra32] mqtt bad client id");
+      Serial.println(F("[ra32] mqtt bad client id"));
       break;
     case MQTT_CONNECT_UNAVAILABLE:
-      Serial.println("[ra32] mqtt unavailable");
+      Serial.println(F("[ra32] mqtt unavailable"));
       break;
     case MQTT_CONNECT_BAD_CREDENTIALS:
-      Serial.println("[ra32] mqtt bad credentials");
+      Serial.println(F("[ra32] mqtt bad credentials"));
       break;      
     case MQTT_CONNECT_UNAUTHORIZED:
-      Serial.println("[ra32] mqtt unauthorised");
+      Serial.println(F("[ra32] mqtt unauthorised"));
       break;      
   }
 }
@@ -198,16 +198,16 @@ void _mqttCallback(char * topic, byte * payload, int length)
   switch (state)
   {
     case MQTT_RECEIVE_ZERO_LENGTH:
-      Serial.println("[ra32] empty mqtt payload received");
+      Serial.println(F("[ra32] empty mqtt payload received"));
       break;
     case MQTT_RECEIVE_JSON_ERROR:
-      Serial.println("[ra32] failed to deserialise mqtt json payload");
+      Serial.println(F("[ra32] failed to deserialise mqtt json payload"));
       break;
     case MQTT_RECEIVE_NO_CONFIG_HANDLER:
-      Serial.println("[ra32] no mqtt config handler");
+      Serial.println(F("[ra32] no mqtt config handler"));
       break;
     case MQTT_RECEIVE_NO_COMMAND_HANDLER:
-      Serial.println("[ra32] no mqtt command handler");
+      Serial.println(F("[ra32] no mqtt command handler"));
       break;
   }
 }
@@ -269,10 +269,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _onCommand = command;
   
   // Set up the screen
-  _screen.begin();
-
-  // Display firmware details
-  _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
+  _initialiseScreen();
 
   // Set up ethernet and obtain an IP address
   byte mac[6];
@@ -288,7 +285,7 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
   _initialiseTempSensor();
 }
 
-void OXRS_Rack32::loop()
+void OXRS_Rack32::loop(void)
 {
   // Check our network connection
   if (_isNetworkConnected())
@@ -350,20 +347,46 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
   return success;
 }
 
+void OXRS_Rack32::_initialiseScreen(void)
+{
+  // Initialise the LCD
+  _screen.begin();
+
+  // Display the firmware and logo (either from SPIFFS or PROGMEM)
+  int returnCode = _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
+  
+  switch (returnCode)
+  {
+    case LCD_INFO_LOGO_FROM_SPIFFS:
+      Serial.println(F("[ra32] logo loaded from SPIFFS"));
+    case LCD_INFO_LOGO_FROM_PROGMEM:
+      Serial.println(F("[ra32] logo loaded from PROGMEM"));
+    case LCD_INFO_LOGO_DEFAULT:
+      Serial.println(F("[ra32] no logo found, using default OXRS logo"));
+    case LCD_ERR_NO_LOGO:
+      Serial.println(F("[ra32] no logo found"));
+  }
+}
+
 void OXRS_Rack32::_initialiseEthernet(byte * mac)
 {
-  WiFi.macAddress(mac);  // Temporarily populate Ethernet MAC with ESP32 Base MAC
-  mac[5] += 3;           // Ethernet MAC is Base MAC + 3 (see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address)
+  // Get ESP32 base MAC address
+  WiFi.macAddress(mac);
+  
+  // Ethernet MAC address is base MAC + 3
+  // See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address
+  mac[5] += 3;
 
+  // Display the MAC address on serial
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
   Serial.print(F("[ra32] mac address: "));
   Serial.println(mac_display);
 
+  // Initialise ethernet library
   Ethernet.init(ETHERNET_CS_PIN);
 
-  // resetting Wiznet W5500
+  // Reset Wiznet W5500
   pinMode(WIZNET_RESET_PIN, OUTPUT);
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(250);
@@ -372,6 +395,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   digitalWrite(WIZNET_RESET_PIN, HIGH);
   delay(350);
 
+  // Get an IP address via DHCP and display on serial
   Serial.print(F("[ra32] ip address:  "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
@@ -446,7 +470,7 @@ void OXRS_Rack32::_updateTempSensor(void)
   }
 }
 
-boolean OXRS_Rack32::_isNetworkConnected()
+boolean OXRS_Rack32::_isNetworkConnected(void)
 {
   // TODO: Add check for WiFi status if we add support for WiFi
   return Ethernet.linkStatus() == LinkON;
