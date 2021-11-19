@@ -15,6 +15,7 @@ setMqttTopicPrefix	KEYWORD2
 setMqttTopicSuffix	KEYWORD2
 
 setConfigSchema	KEYWORD2
+setCommandSchema	KEYWORD2
 
 setDisplayPorts	KEYWORD2
 updateDisplayPorts	KEYWORD2

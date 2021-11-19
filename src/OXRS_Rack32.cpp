@@ -36,8 +36,9 @@ const char *    _fwMaker;
 const char *    _fwVersion;
 const uint8_t * _fwLogo;
  
-// Supported firmware config schema
+// Supported firmware config and command schemas
 DynamicJsonDocument _fwConfigSchema(2048);
+DynamicJsonDocument _fwCommandSchema(2048);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -102,7 +103,7 @@ void _getConfigJson(JsonVariant json)
 
   JsonObject properties = config.createNestedObject("properties");
 
-  // Firmware config (if any)
+  // Firmware config schema (if any)
   if (!_fwConfigSchema.isNull())
   {
     _mergeJson(properties, _fwConfigSchema.as<JsonVariant>());
@@ -112,6 +113,28 @@ void _getConfigJson(JsonVariant json)
   JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
   temperatureUpdateMillis["type"] = "integer";
   temperatureUpdateMillis["minimum"] = 0;
+}
+
+void _getCommandJson(JsonVariant json)
+{
+  JsonObject command = json.createNestedObject("command");
+  
+  // Command schema metadata
+  command["$schema"] = "http://json-schema.org/draft-04/schema#";
+  command["description"] = _fwName;
+  command["type"] = "object";
+
+  JsonObject properties = command.createNestedObject("properties");
+
+  // Firmware command schema (if any)
+  if (!_fwCommandSchema.isNull())
+  {
+    _mergeJson(properties, _fwCommandSchema.as<JsonVariant>());
+  }
+
+  // Rack32 commands
+  JsonObject restart = properties.createNestedObject("restart");
+  restart["type"] = "boolean";
 }
 
 /* MQTT callbacks */
@@ -124,6 +147,7 @@ void _mqttConnected()
   _getFirmwareJson(adopt);
   _getNetworkJson(adopt);
   _getConfigJson(adopt);
+  _getCommandJson(adopt);
 
   // Publish device adoption info
   _mqtt.publishAdopt(adopt);
@@ -182,7 +206,11 @@ void _mqttConfig(JsonVariant json)
 
 void _mqttCommand(JsonVariant json)
 {
-  // TODO: should we have a command schema and have the same keys as we do for config?
+  // Check for library commands
+  if (json.containsKey("restart") && json["restart"].as<bool>())
+  {
+    ESP.restart();
+  }
   
   // Pass on to the firmware callback
   if (_onCommand) { _onCommand(json); }
@@ -250,6 +278,11 @@ void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
 void OXRS_Rack32::setConfigSchema(JsonVariant json)
 {
   _mergeJson(_fwConfigSchema.as<JsonVariant>(), json);
+}
+
+void OXRS_Rack32::setCommandSchema(JsonVariant json)
+{
+  _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
 void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
@@ -400,7 +433,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   delay(350);
 
   // Get an IP address via DHCP and display on serial
-  Serial.print(F("[ra32] ip address:  "));
+  Serial.print(F("[ra32] ip address: "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     Serial.println(Ethernet.localIP());

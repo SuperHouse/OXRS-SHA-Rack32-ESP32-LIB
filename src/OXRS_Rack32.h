@@ -48,8 +48,9 @@ class OXRS_Rack32
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
 
-    // Firmware can define the config options it supports - for device discovery and adoption
+    // Firmware can define the config/commands it supports - for device discovery and adoption
     void setConfigSchema(JsonVariant json);
+    void setCommandSchema(JsonVariant json);
 
     void setDisplayPorts(uint8_t mcp23017s, int layout);
     void updateDisplayPorts(uint8_t mcp23017, uint16_t ioValue);
