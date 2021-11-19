@@ -433,7 +433,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   delay(350);
 
   // Get an IP address via DHCP and display on serial
-  Serial.print(F("[ra32] ip address:  "));
+  Serial.print(F("[ra32] ip address: "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     Serial.println(Ethernet.localIP());
