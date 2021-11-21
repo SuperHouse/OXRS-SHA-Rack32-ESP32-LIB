@@ -94,11 +94,11 @@ void _getNetworkJson(JsonVariant json)
 
 void _getConfigJson(JsonVariant json)
 {
-  JsonObject config = json.createNestedObject("config");
+  JsonObject config = json.createNestedObject("configSchema");
   
   // Config schema metadata
   config["$schema"] = "http://json-schema.org/draft-04/schema#";
-  config["description"] = _fwName;
+  config["title"] = _fwName;
   config["type"] = "object";
 
   JsonObject properties = config.createNestedObject("properties");
@@ -112,16 +112,17 @@ void _getConfigJson(JsonVariant json)
   // Rack32 config
   JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
   temperatureUpdateMillis["type"] = "integer";
+  temperatureUpdateMillis["title"] = "Temperature Updates (ms)";
   temperatureUpdateMillis["minimum"] = 0;
 }
 
 void _getCommandJson(JsonVariant json)
 {
-  JsonObject command = json.createNestedObject("command");
+  JsonObject command = json.createNestedObject("commandSchema");
   
   // Command schema metadata
   command["$schema"] = "http://json-schema.org/draft-04/schema#";
-  command["description"] = _fwName;
+  command["title"] = _fwName;
   command["type"] = "object";
 
   JsonObject properties = command.createNestedObject("properties");
@@ -135,6 +136,7 @@ void _getCommandJson(JsonVariant json)
   // Rack32 commands
   JsonObject restart = properties.createNestedObject("restart");
   restart["type"] = "boolean";
+  restart["title"] = "Restart";
 }
 
 /* MQTT callbacks */
