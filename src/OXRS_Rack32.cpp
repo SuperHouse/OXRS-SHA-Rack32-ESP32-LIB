@@ -471,7 +471,8 @@ void OXRS_Rack32::_initialiseRestApi(void)
   //       settings stored in file and loaded by the API
 
   // Set up the REST API
-  _api.begin();  
+  _api.begin();
+  _api.setFirmware(_fwName, _fwShortName, _fwMaker, _fwVersion);
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
