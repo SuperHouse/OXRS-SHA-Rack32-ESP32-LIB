@@ -92,13 +92,13 @@ void _getNetworkJson(JsonVariant json)
   network["mac"] = mac_display;
 }
 
-void _getConfigJson(JsonVariant json)
+void _getConfigSchemaJson(JsonVariant json)
 {
-  JsonObject config = json.createNestedObject("config");
+  JsonObject config = json.createNestedObject("configSchema");
   
   // Config schema metadata
   config["$schema"] = "http://json-schema.org/draft-04/schema#";
-  config["description"] = _fwName;
+  config["title"] = _fwName;
   config["type"] = "object";
 
   JsonObject properties = config.createNestedObject("properties");
@@ -115,13 +115,13 @@ void _getConfigJson(JsonVariant json)
   temperatureUpdateMillis["minimum"] = 0;
 }
 
-void _getCommandJson(JsonVariant json)
+void _getCommandSchemaJson(JsonVariant json)
 {
-  JsonObject command = json.createNestedObject("command");
+  JsonObject command = json.createNestedObject("commandSchema");
   
   // Command schema metadata
   command["$schema"] = "http://json-schema.org/draft-04/schema#";
-  command["description"] = _fwName;
+  command["title"] = _fwName;
   command["type"] = "object";
 
   JsonObject properties = command.createNestedObject("properties");
@@ -146,8 +146,8 @@ void _mqttConnected()
   
   _getFirmwareJson(adopt);
   _getNetworkJson(adopt);
-  _getConfigJson(adopt);
-  _getCommandJson(adopt);
+  _getConfigSchemaJson(adopt);
+  _getCommandSchemaJson(adopt);
 
   // Publish device adoption info
   _mqtt.publishAdopt(adopt);
