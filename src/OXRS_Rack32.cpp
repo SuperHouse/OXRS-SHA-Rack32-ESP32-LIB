@@ -112,7 +112,6 @@ void _getConfigJson(JsonVariant json)
   // Rack32 config
   JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
   temperatureUpdateMillis["type"] = "integer";
-  temperatureUpdateMillis["title"] = "Temperature Updates (ms)";
   temperatureUpdateMillis["minimum"] = 0;
 }
 
@@ -136,7 +135,6 @@ void _getCommandJson(JsonVariant json)
   // Rack32 commands
   JsonObject restart = properties.createNestedObject("restart");
   restart["type"] = "boolean";
-  restart["title"] = "Restart";
 }
 
 /* MQTT callbacks */
