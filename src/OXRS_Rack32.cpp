@@ -92,7 +92,7 @@ void _getNetworkJson(JsonVariant json)
   network["mac"] = mac_display;
 }
 
-void _getConfigJson(JsonVariant json)
+void _getConfigSchemaJson(JsonVariant json)
 {
   JsonObject config = json.createNestedObject("configSchema");
   
@@ -115,7 +115,7 @@ void _getConfigJson(JsonVariant json)
   temperatureUpdateMillis["minimum"] = 0;
 }
 
-void _getCommandJson(JsonVariant json)
+void _getCommandSchemaJson(JsonVariant json)
 {
   JsonObject command = json.createNestedObject("commandSchema");
   
@@ -146,8 +146,8 @@ void _mqttConnected()
   
   _getFirmwareJson(adopt);
   _getNetworkJson(adopt);
-  _getConfigJson(adopt);
-  _getCommandJson(adopt);
+  _getConfigSchemaJson(adopt);
+  _getCommandSchemaJson(adopt);
 
   // Publish device adoption info
   _mqtt.publishAdopt(adopt);
