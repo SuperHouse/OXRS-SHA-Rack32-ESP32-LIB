@@ -94,14 +94,14 @@ void _getNetworkJson(JsonVariant json)
 
 void _getConfigSchemaJson(JsonVariant json)
 {
-  JsonObject config = json.createNestedObject("configSchema");
+  JsonObject configSchema = json.createNestedObject("configSchema");
   
   // Config schema metadata
-  config["$schema"] = "http://json-schema.org/draft-04/schema#";
-  config["title"] = _fwName;
-  config["type"] = "object";
+  configSchema["$schema"] = "http://json-schema.org/draft-04/schema#";
+  configSchema["title"] = _fwName;
+  configSchema["type"] = "object";
 
-  JsonObject properties = config.createNestedObject("properties");
+  JsonObject properties = configSchema.createNestedObject("properties");
 
   // Firmware config schema (if any)
   if (!_fwConfigSchema.isNull())
@@ -117,14 +117,14 @@ void _getConfigSchemaJson(JsonVariant json)
 
 void _getCommandSchemaJson(JsonVariant json)
 {
-  JsonObject command = json.createNestedObject("commandSchema");
+  JsonObject commandSchema = json.createNestedObject("commandSchema");
   
   // Command schema metadata
-  command["$schema"] = "http://json-schema.org/draft-04/schema#";
-  command["title"] = _fwName;
-  command["type"] = "object";
+  commandSchema["$schema"] = "http://json-schema.org/draft-04/schema#";
+  commandSchema["title"] = _fwName;
+  commandSchema["type"] = "object";
 
-  JsonObject properties = command.createNestedObject("properties");
+  JsonObject properties = commandSchema.createNestedObject("properties");
 
   // Firmware command schema (if any)
   if (!_fwCommandSchema.isNull())
