@@ -460,7 +460,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   // Display the MAC address on serial
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  Serial.print(F("[ra32] mac address: "));
+  Serial.print(F("[ra32] ethernet mac address: "));
   Serial.println(mac_display);
 
   // Initialise ethernet library
@@ -476,7 +476,7 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   delay(350);
 
   // Get an IP address via DHCP and display on serial
-  Serial.print(F("[ra32] ip address: "));
+  Serial.print(F("[ra32] ethernet ip address: "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
     Serial.println(Ethernet.localIP());
