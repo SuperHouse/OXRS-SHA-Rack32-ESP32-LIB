@@ -63,7 +63,11 @@ class OXRS_Rack32
 
   private:
     void _initialiseScreen(void);
+#ifndef USE_WIFI
     void _initialiseEthernet(byte * mac);
+#else
+    void _initialiseWifi(byte * mac);
+#endif
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
     void _initialiseTempSensor(void);

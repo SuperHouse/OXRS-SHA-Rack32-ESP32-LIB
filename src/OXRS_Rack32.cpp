@@ -2,6 +2,17 @@
  * OXRS_Rack32.cpp
  */
 
+/*--------------------------- Switch to WiFi -----------------------------*/
+/* if you want to use WiFi instead of the default Ethernet 
+ * uncomment the block below
+ * and set the credentials for your WiFi network
+ */
+/****
+#define USE_WIFI
+#define WIFI_SSID  "your_SSID"
+#define WIFI_PASSW "your_PASSW"
+****/
+
 #include "Arduino.h"
 #include "OXRS_Rack32.h"
 #include "bootstrap_html.h"
@@ -12,18 +23,33 @@
 #include <Adafruit_MCP9808.h>         // For temp sensor
 #include <PubSubClient.h>             // For MQTT
 
+#ifndef USE_WIFI
 // Ethernet client
 EthernetClient _client;
+#else
+// Wifi client
+WiFiClient _client;
+#endif
 
 // MQTT client
 PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
 
 // LCD screen
+#ifndef USE_WIFI
 OXRS_LCD _screen(Ethernet, _mqtt);
+#else
+OXRS_LCD _screen(WiFi, _mqtt);
+#endif  
 
 // REST API
+#ifndef USE_WIFI
 EthernetServer _server(REST_API_PORT);
+#else
+WiFiServer _server(REST_API_PORT);
+#endif  
+
+
 OXRS_API _api(_mqtt);
 
 // Temp sensor
@@ -81,14 +107,19 @@ void _getFirmwareJson(JsonVariant json)
 void _getNetworkJson(JsonVariant json)
 {
   byte mac[6];
+  
+  JsonObject network = json.createNestedObject("network");
+
+#ifndef USE_WIFI  
   Ethernet.MACAddress(mac);
+  network["ip"] = Ethernet.localIP();
+#else
+  WiFi.macAddress(mac);
+  network["ip"] = WiFi.localIP();
+#endif
   
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
-  JsonObject network = json.createNestedObject("network");
-
-  network["ip"] = Ethernet.localIP();
   network["mac"] = mac_display;
 }
 
@@ -306,7 +337,11 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 
   // Set up ethernet and obtain an IP address
   byte mac[6];
+#ifndef USE_WIFI
   _initialiseEthernet(mac);
+#else
+  _initialiseWifi(mac);
+#endif  
 
   // Set up MQTT (don't attempt to connect yet)
   _initialiseMqtt(mac);
@@ -324,14 +359,21 @@ void OXRS_Rack32::loop(void)
   if (_isNetworkConnected())
   {
     // Maintain our DHCP lease
+#ifndef USE_WIFI
     Ethernet.maintain();
+#endif
     
     // Handle any MQTT messages
     _mqtt.loop();
     
     // Handle any REST API requests
+#ifndef USE_WIFI
     EthernetClient client = _server.available();
     _api.checkEthernet(&client);
+#else
+    WiFiClient client = _server.available();
+    _api.checkWifi(&client);
+#endif
   }
     
   // Update screen
@@ -405,6 +447,7 @@ void OXRS_Rack32::_initialiseScreen(void)
   }
 }
 
+#ifndef USE_WIFI
 void OXRS_Rack32::_initialiseEthernet(byte * mac)
 {
   // Get ESP32 base MAC address
@@ -443,6 +486,30 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
     Serial.println(F("none"));
   }
 }
+#else
+void OXRS_Rack32::_initialiseWifi(byte * mac)
+{
+ // Get ESP32 base MAC address
+  WiFi.macAddress(mac);
+  
+  // Display the MAC address on serial
+  char mac_display[18];
+  sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.print(F("[ra32] wifi mac address: "));
+  Serial.println(mac_display);
+
+  // Get an IP address via DHCP and display on serial
+  Serial.print(F("[ra32] wifi ip address: "));
+  if (WiFi.begin(WIFI_SSID, WIFI_PASSW))
+  {
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println(F("none"));
+  }
+}
+#endif
 
 void OXRS_Rack32::_initialiseMqtt(byte * mac)
 {
@@ -473,6 +540,7 @@ void OXRS_Rack32::_initialiseRestApi(void)
   // Set up the REST API
   _api.begin();
   _api.setFirmware(_fwName, _fwShortName, _fwMaker, _fwVersion);
+  _server.begin();
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
@@ -511,5 +579,10 @@ void OXRS_Rack32::_updateTempSensor(void)
 boolean OXRS_Rack32::_isNetworkConnected(void)
 {
   // TODO: Add check for WiFi status if we add support for WiFi
+#ifndef USE_WIFI
   return Ethernet.linkStatus() == LinkON;
+#else
+  return WiFi.status() == WL_CONNECTED;
+#endif
+
 }
