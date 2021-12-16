@@ -49,7 +49,8 @@ jsonCallback _onCommand;
 //
 // WARNING: depending how long it takes to read the temp sensor, 
 //          you might see event detection/processing interrupted
-uint32_t _temp_update_ms = DEFAULT_TEMP_UPDATE_MS;
+bool     _tempSensorFound = false;
+uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
@@ -197,7 +198,7 @@ void _mqttConfig(JsonVariant json)
   // Check for library config
   if (json.containsKey("temperatureUpdateMillis"))
   {
-    _temp_update_ms = json["temperatureUpdateMillis"].as<uint32_t>();
+    _tempUpdateMs = json["temperatureUpdateMillis"].as<uint32_t>();
   }
   
   // Pass on to the firmware callback
@@ -481,28 +482,42 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   Wire.begin();
 
   // Initialise the onboard MCP9808 temp sensor
-  _tempSensor.begin(MCP9808_I2C_ADDRESS);
+  _tempSensorFound = _tempSensor.begin(MCP9808_I2C_ADDRESS);
+  if (!_tempSensorFound)
+  {
+    Serial.print(F("[ra32] no MCP9808 temp sensor found at 0x"));
+    Serial.println(MCP9808_I2C_ADDRESS, HEX);
+    return;
+  }
+  
+  // Set the temp sensor resolution (higher res takes longer for reading)
   _tempSensor.setResolution(MCP9808_MODE);
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
 {
-  if (_temp_update_ms > 0 && (millis() - _lastTempUpdate) > _temp_update_ms)
+  // Ignore if temp sensor not found or has been disabled
+  if (!_tempSensorFound || _tempUpdateMs == 0) { return; }
+  
+  // Check if we need to get a new temp reading and publish
+  if ((millis() - _lastTempUpdate) > _tempUpdateMs)
   {
     // Read temp from onboard sensor
     float temperature = _tempSensor.readTempC();
+    if (temperature != NAN)
+    {
+      // Display temp on screen
+      _screen.show_temp(temperature); 
+
+      // Publish temp to mqtt
+      char payload[8];
+      sprintf(payload, "%2.1f", temperature);
     
-    // Display temp on screen
-    _screen.show_temp(temperature); 
-
-    // Publish temp to mqtt
-    char payload[8];
-    sprintf(payload, "%2.1f", temperature);
-  
-    StaticJsonDocument<32> json;
-    json["temperature"] = payload;
-    publishTelemetry(json.as<JsonVariant>());
-
+      StaticJsonDocument<32> json;
+      json["temperature"] = payload;
+      publishTelemetry(json.as<JsonVariant>());
+    }
+    
     // Reset our timer
     _lastTempUpdate = millis();
   }
