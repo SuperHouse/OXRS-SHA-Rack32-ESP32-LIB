@@ -98,7 +98,7 @@ void _getConfigSchemaJson(JsonVariant json)
   JsonObject configSchema = json.createNestedObject("configSchema");
   
   // Config schema metadata
-  configSchema["$schema"] = "http://json-schema.org/draft-04/schema#";
+  configSchema["$schema"] = JSON_SCHEMA_VERSION;
   configSchema["title"] = _fwName;
   configSchema["type"] = "object";
 
@@ -121,7 +121,7 @@ void _getCommandSchemaJson(JsonVariant json)
   JsonObject commandSchema = json.createNestedObject("commandSchema");
   
   // Command schema metadata
-  commandSchema["$schema"] = "http://json-schema.org/draft-04/schema#";
+  commandSchema["$schema"] = JSON_SCHEMA_VERSION;
   commandSchema["title"] = _fwName;
   commandSchema["type"] = "object";
 
