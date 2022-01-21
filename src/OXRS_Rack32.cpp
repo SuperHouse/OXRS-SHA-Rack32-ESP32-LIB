@@ -152,7 +152,8 @@ void _apiAdopt(JsonVariant json)
 void _mqttConnected() 
 {
   // Publish device adoption info
-  _mqtt.publishAdopt(_api.getAdopt());
+  DynamicJsonDocument json(JSON_ADOPT_MAX_SIZE);
+  _mqtt.publishAdopt(_api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
   Serial.println("[ra32] mqtt connected");
