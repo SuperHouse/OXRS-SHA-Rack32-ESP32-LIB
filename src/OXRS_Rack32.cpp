@@ -68,7 +68,7 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
   }
 }
 
-/* MQTT adoption info builders */
+/* Adoption info builders */
 void _getFirmwareJson(JsonVariant json)
 {
   JsonObject firmware = json.createNestedObject("firmware");
@@ -138,20 +138,22 @@ void _getCommandSchemaJson(JsonVariant json)
   restart["type"] = "boolean";
 }
 
+/* API callbacks */
+void _apiAdopt(JsonVariant json)
+{
+  // Build device adoption info
+  _getFirmwareJson(json);
+  _getNetworkJson(json);
+  _getConfigSchemaJson(json);
+  _getCommandSchemaJson(json);
+}
+
 /* MQTT callbacks */
 void _mqttConnected() 
 {
-  // Build device adoption info
-  DynamicJsonDocument json(4096);
-  JsonVariant adopt = json.as<JsonVariant>();
-  
-  _getFirmwareJson(adopt);
-  _getNetworkJson(adopt);
-  _getConfigSchemaJson(adopt);
-  _getCommandSchemaJson(adopt);
-
   // Publish device adoption info
-  _mqtt.publishAdopt(adopt);
+  DynamicJsonDocument json(JSON_ADOPT_MAX_SIZE);
+  _mqtt.publishAdopt(_api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
   Serial.println("[ra32] mqtt connected");
@@ -473,7 +475,9 @@ void OXRS_Rack32::_initialiseRestApi(void)
 
   // Set up the REST API
   _api.begin();
-  _api.setFirmware(_fwName, _fwShortName, _fwMaker, _fwVersion);
+  
+  // Register our callbacks
+  _api.onAdopt(_apiAdopt);
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
