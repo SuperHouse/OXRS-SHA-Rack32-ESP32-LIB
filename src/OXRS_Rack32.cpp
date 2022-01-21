@@ -68,7 +68,7 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
   }
 }
 
-/* MQTT adoption info builders */
+/* Adoption info builders */
 void _getFirmwareJson(JsonVariant json)
 {
   JsonObject firmware = json.createNestedObject("firmware");
@@ -138,6 +138,7 @@ void _getCommandSchemaJson(JsonVariant json)
   restart["type"] = "boolean";
 }
 
+/* API callbacks */
 void _apiAdopt(JsonVariant json)
 {
   // Build device adoption info
