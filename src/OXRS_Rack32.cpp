@@ -138,7 +138,7 @@ void _getCommandSchemaJson(JsonVariant json)
   restart["type"] = "boolean";
 }
 
-void _getAdoptJson(JsonVariant json)
+void _apiAdopt(JsonVariant json)
 {
   // Build device adoption info
   _getFirmwareJson(json);
@@ -475,7 +475,7 @@ void OXRS_Rack32::_initialiseRestApi(void)
   _api.begin();
   
   // Register our callbacks
-  _api.onAdopt(_getAdoptJson);
+  _api.onAdopt(_apiAdopt);
 }
 
 void OXRS_Rack32::_initialiseTempSensor(void)
