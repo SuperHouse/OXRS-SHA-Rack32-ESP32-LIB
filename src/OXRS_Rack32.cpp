@@ -4,7 +4,6 @@
 
 #include "Arduino.h"
 #include "OXRS_Rack32.h"
-#include "bootstrap_html.h"
 
 #include <Wire.h>                     // For I2C
 #include <Ethernet.h>                 // For networking
