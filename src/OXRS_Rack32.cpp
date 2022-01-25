@@ -110,9 +110,12 @@ void _getConfigSchemaJson(JsonVariant json)
   }
 
   // Rack32 config
-  JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
-  temperatureUpdateMillis["type"] = "integer";
-  temperatureUpdateMillis["minimum"] = 0;
+  if (_tempSensorFound)
+  {
+    JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
+    temperatureUpdateMillis["type"] = "integer";
+    temperatureUpdateMillis["minimum"] = 0;
+  }
 }
 
 void _getCommandSchemaJson(JsonVariant json)
