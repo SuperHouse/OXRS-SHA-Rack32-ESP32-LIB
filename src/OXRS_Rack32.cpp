@@ -113,8 +113,11 @@ void _getConfigSchemaJson(JsonVariant json)
   if (_tempSensorFound)
   {
     JsonObject temperatureUpdateSeconds = properties.createNestedObject("temperatureUpdateSeconds");
+    temperatureUpdateSeconds["title"] = "Temperature Update Interval (seconds)";
+    temperatureUpdateSeconds["description"] = "How often to read and report the value from the onboard MCP9808 temperature sensor, in seconds (defaults to 60 seconds, 0 will disable temperature reports). Must be a number between 0 and 86400 (i.e. 1 day).";
     temperatureUpdateSeconds["type"] = "integer";
     temperatureUpdateSeconds["minimum"] = 0;
+    temperatureUpdateSeconds["maximum"] = 86400;
   }
 }
 
@@ -137,6 +140,7 @@ void _getCommandSchemaJson(JsonVariant json)
 
   // Rack32 commands
   JsonObject restart = properties.createNestedObject("restart");
+  restart["title"] = "Restart";
   restart["type"] = "boolean";
 }
 
