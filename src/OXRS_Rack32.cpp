@@ -44,7 +44,7 @@ jsonCallback _onConfig;
 jsonCallback _onCommand;
 
 // Temperature update interval - extend or disable temp updates via 
-// the MQTT config option "temperatureUpdateMillis" - zero to disable
+// the MQTT config option "temperatureUpdateSeconds" - zero to disable
 //
 // WARNING: depending how long it takes to read the temp sensor, 
 //          you might see event detection/processing interrupted
@@ -112,9 +112,9 @@ void _getConfigSchemaJson(JsonVariant json)
   // Rack32 config
   if (_tempSensorFound)
   {
-    JsonObject temperatureUpdateMillis = properties.createNestedObject("temperatureUpdateMillis");
-    temperatureUpdateMillis["type"] = "integer";
-    temperatureUpdateMillis["minimum"] = 0;
+    JsonObject temperatureUpdateSeconds = properties.createNestedObject("temperatureUpdateSeconds");
+    temperatureUpdateSeconds["type"] = "integer";
+    temperatureUpdateSeconds["minimum"] = 0;
   }
 }
 
@@ -200,9 +200,9 @@ void _mqttDisconnected(int state)
 void _mqttConfig(JsonVariant json)
 {
   // Check for library config
-  if (json.containsKey("temperatureUpdateMillis"))
+  if (json.containsKey("temperatureUpdateSeconds"))
   {
-    _tempUpdateMs = json["temperatureUpdateMillis"].as<uint32_t>();
+    _tempUpdateMs = json["temperatureUpdateSeconds"].as<uint32_t>() * 1000L;
   }
   
   // Pass on to the firmware callback
