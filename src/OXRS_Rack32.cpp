@@ -232,8 +232,6 @@ void _mqttDisconnected(int state)
 
 void _mqttConfig(JsonVariant json)
 {
-  int bon, bdim, td, te;
-  
   // Check for library config
   if (json.containsKey("temperatureUpdateSeconds"))
   {
@@ -242,27 +240,23 @@ void _mqttConfig(JsonVariant json)
 
   if (json.containsKey("brightnessOnState"))
   {
-    bon = json["brightnessOnState"].as<int32_t>();
+    _screen.setBrightnessOn(json["brightnessOnState"].as<int32_t>());
   }
 
   if (json.containsKey("brightnessDimState"))
   {
-    bdim = json["brightnessDimState"].as<int32_t>();
-    _screen.setBrightness(bon, bdim);
+    _screen.setBrightnessDim(json["brightnessDimState"].as<int32_t>());
   }
 
   if (json.containsKey("onTimeDisplay"))
   {
-    td = json["onTimeDisplay"].as<int32_t>();
+    _screen.setOnTimeDisplay(json["onTimeDisplay"].as<int32_t>());
   }
   
   if (json.containsKey("onTimeEvent"))
   {
-    te = json["onTimeEvent"].as<int32_t>();
-    _screen.setEventTimes(td, te);
+    _screen.setOnTimeEvent(json["onTimeEvent"].as<int32_t>());
   }
-
-
   
   // Pass on to the firmware callback
   if (_onConfig) { _onConfig(json); }
