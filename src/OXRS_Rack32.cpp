@@ -136,15 +136,15 @@ void _getConfigSchemaJson(JsonVariant json)
   inactiveBrightnessPercent["maximum"] = 100;
 
   JsonObject activeDisplaySeconds = properties.createNestedObject("activeDisplaySeconds");
-  activeDisplaySeconds["title"] = "LCD Active Display (seconds)";
-  activeDisplaySeconds["description"] = "How long the LCD remains 'active' after an event is detected (defaults to 10 seconds). Must be a number between 0 and 600 (i.e. 10 minutes).";
+  activeDisplaySeconds["title"] = "LCD Active Display Timeout (seconds)";
+  activeDisplaySeconds["description"] = "How long the LCD remains 'active' after an event is detected (defaults to 10 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
   activeDisplaySeconds["type"] = "integer";
   activeDisplaySeconds["minimum"] = 0;
   activeDisplaySeconds["maximum"] = 600;
 
   JsonObject eventDisplaySeconds = properties.createNestedObject("eventDisplaySeconds");
-  eventDisplaySeconds["title"] = "LCD Event Display (seconds)";
-  eventDisplaySeconds["description"] = "How long the last event is displayed on the LCD (defaults to 3 seconds, setting to 0 disables the timeout so last event always shown). Must be a number between 0 and 600 (i.e. 10 minutes).";
+  eventDisplaySeconds["title"] = "LCD Event Display Timeout (seconds)";
+  eventDisplaySeconds["description"] = "How long the last event is displayed on the LCD (defaults to 3 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
   eventDisplaySeconds["type"] = "integer";
   eventDisplaySeconds["minimum"] = 0;
   eventDisplaySeconds["maximum"] = 600;
