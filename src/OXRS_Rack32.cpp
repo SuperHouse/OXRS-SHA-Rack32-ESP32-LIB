@@ -109,16 +109,45 @@ void _getConfigSchemaJson(JsonVariant json)
     _mergeJson(properties, _fwConfigSchema.as<JsonVariant>());
   }
 
-  // Rack32 config
+  // MCP9808 temp sensor config
   if (_tempSensorFound)
   {
     JsonObject temperatureUpdateSeconds = properties.createNestedObject("temperatureUpdateSeconds");
     temperatureUpdateSeconds["title"] = "Temperature Update Interval (seconds)";
-    temperatureUpdateSeconds["description"] = "How often to read and report the value from the onboard MCP9808 temperature sensor, in seconds (defaults to 60 seconds, 0 will disable temperature reports). Must be a number between 0 and 86400 (i.e. 1 day).";
+    temperatureUpdateSeconds["description"] = "How often to read and report the value from the onboard MCP9808 temperature sensor (defaults to 60 seconds, setting to 0 disables temperature reports). Must be a number between 0 and 86400 (i.e. 1 day).";
     temperatureUpdateSeconds["type"] = "integer";
     temperatureUpdateSeconds["minimum"] = 0;
     temperatureUpdateSeconds["maximum"] = 86400;
   }
+
+  // LCD config
+  JsonObject activeBrightnessPercent = properties.createNestedObject("activeBrightnessPercent");
+  activeBrightnessPercent["title"] = "LCD Active Brightness (%)";
+  activeBrightnessPercent["description"] = "Brightness of the LCD when active (defaults to 100%). Must be a number between 0 and 100.";
+  activeBrightnessPercent["type"] = "integer";
+  activeBrightnessPercent["minimum"] = 0;
+  activeBrightnessPercent["maximum"] = 100;
+ 
+  JsonObject inactiveBrightnessPercent = properties.createNestedObject("inactiveBrightnessPercent");
+  inactiveBrightnessPercent["title"] = "LCD Inactive Brightness (%)";
+  inactiveBrightnessPercent["description"] = "Brightness of the LCD when in-active (defaults to 10%). Must be a number between 0 and 100.";
+  inactiveBrightnessPercent["type"] = "integer";
+  inactiveBrightnessPercent["minimum"] = 0;
+  inactiveBrightnessPercent["maximum"] = 100;
+
+  JsonObject activeDisplaySeconds = properties.createNestedObject("activeDisplaySeconds");
+  activeDisplaySeconds["title"] = "LCD Active Display Timeout (seconds)";
+  activeDisplaySeconds["description"] = "How long the LCD remains 'active' after an event is detected (defaults to 10 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
+  activeDisplaySeconds["type"] = "integer";
+  activeDisplaySeconds["minimum"] = 0;
+  activeDisplaySeconds["maximum"] = 600;
+
+  JsonObject eventDisplaySeconds = properties.createNestedObject("eventDisplaySeconds");
+  eventDisplaySeconds["title"] = "LCD Event Display Timeout (seconds)";
+  eventDisplaySeconds["description"] = "How long the last event is displayed on the LCD (defaults to 3 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
+  eventDisplaySeconds["type"] = "integer";
+  eventDisplaySeconds["minimum"] = 0;
+  eventDisplaySeconds["maximum"] = 600;
 }
 
 void _getCommandSchemaJson(JsonVariant json)
@@ -203,12 +232,33 @@ void _mqttDisconnected(int state)
 
 void _mqttConfig(JsonVariant json)
 {
-  // Check for library config
+  // MCP9808 temp sensor config
   if (json.containsKey("temperatureUpdateSeconds"))
   {
     _tempUpdateMs = json["temperatureUpdateSeconds"].as<uint32_t>() * 1000L;
   }
   
+  // LCD config
+  if (json.containsKey("activeBrightnessPercent"))
+  {
+    _screen.setBrightnessOn(json["activeBrightnessPercent"].as<int>());
+  }
+
+  if (json.containsKey("inactiveBrightnessPercent"))
+  {
+    _screen.setBrightnessDim(json["inactiveBrightnessPercent"].as<int>());
+  }
+
+  if (json.containsKey("activeDisplaySeconds"))
+  {
+    _screen.setOnTimeDisplay(json["activeDisplaySeconds"].as<int>());
+  }
+  
+  if (json.containsKey("eventDisplaySeconds"))
+  {
+    _screen.setOnTimeEvent(json["eventDisplaySeconds"].as<int>());
+  }
+
   // Pass on to the firmware callback
   if (_onConfig) { _onConfig(json); }
 }
