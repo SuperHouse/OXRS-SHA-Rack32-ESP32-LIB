@@ -119,6 +119,35 @@ void _getConfigSchemaJson(JsonVariant json)
     temperatureUpdateSeconds["minimum"] = 0;
     temperatureUpdateSeconds["maximum"] = 86400;
   }
+  
+  JsonObject brightnessOnState = properties.createNestedObject("brightnessOnState");
+  brightnessOnState["title"] = "LCD brightness when ON";
+  brightnessOnState["description"] = "Brightness of the LCD in % when on . Must be a number between 0 and 100.";
+  brightnessOnState["type"] = "integer";
+  brightnessOnState["minimum"] = 0;
+  brightnessOnState["maximum"] = 100;
+ 
+  JsonObject brightnessDimState = properties.createNestedObject("brightnessDimState");
+  brightnessDimState["title"] = "LCD brightness when dimmed";
+  brightnessDimState["description"] = "Brightness of the LCD in % when dimmed . Must be a number between 0 and 100.";
+  brightnessDimState["type"] = "integer";
+  brightnessDimState["minimum"] = 0;
+  brightnessDimState["maximum"] = 100;
+
+  JsonObject onTimeDisplay = properties.createNestedObject("onTimeDisplay");
+  onTimeDisplay["title"] = "Time the display is ON after an event occured.";
+  onTimeDisplay["description"] = "Timer value in seconds, 0 is always on. . Must be a number between 0 and 600.";
+  onTimeDisplay["type"] = "integer";
+  onTimeDisplay["minimum"] = 0;
+  onTimeDisplay["maximum"] = 600;
+
+  JsonObject onTimeEvent = properties.createNestedObject("onTimeEvent");
+  onTimeEvent["title"] = "Time the last event is displayed at the buttom of the LCD.";
+  onTimeEvent["description"] = "Timer value in seconds, 0 means last event never deleted. Must be a number between 0 and 600.";
+  onTimeEvent["type"] = "integer";
+  onTimeEvent["minimum"] = 0;
+  onTimeEvent["maximum"] = 600;
+  
 }
 
 void _getCommandSchemaJson(JsonVariant json)
@@ -203,11 +232,37 @@ void _mqttDisconnected(int state)
 
 void _mqttConfig(JsonVariant json)
 {
+  int bon, bdim, td, te;
+  
   // Check for library config
   if (json.containsKey("temperatureUpdateSeconds"))
   {
     _tempUpdateMs = json["temperatureUpdateSeconds"].as<uint32_t>() * 1000L;
   }
+
+  if (json.containsKey("brightnessOnState"))
+  {
+    bon = json["brightnessOnState"].as<int32_t>();
+  }
+
+  if (json.containsKey("brightnessDimState"))
+  {
+    bdim = json["brightnessDimState"].as<int32_t>();
+    _screen.setBrightness(bon, bdim);
+  }
+
+  if (json.containsKey("onTimeDisplay"))
+  {
+    td = json["onTimeDisplay"].as<int32_t>();
+  }
+  
+  if (json.containsKey("onTimeEvent"))
+  {
+    te = json["onTimeEvent"].as<int32_t>();
+    _screen.setEventTimes(td, te);
+  }
+
+
   
   // Pass on to the firmware callback
   if (_onConfig) { _onConfig(json); }
