@@ -410,7 +410,7 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   {
     char event[32];
     sprintf_P(event, PSTR("idx:%2d"), json["index"].as<uint8_t>());
-    
+
     if (json.containsKey("type"))
     {
       sprintf_P(event, PSTR("%s %s"), event, json["type"].as<const char *>());
