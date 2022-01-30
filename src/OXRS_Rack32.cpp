@@ -410,13 +410,23 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   {
     char event[32];
     sprintf_P(event, PSTR("idx:%2d"), json["index"].as<uint8_t>());
-    
-    if (json.containsKey("type"))
+
+    if (json.containsKey("type") && json.containsKey("event"))
+    {
+      if (strcmp(json["type"], json["event"]) == 0)
+      {
+        sprintf_P(event, PSTR("%s %s"), event, json["type"].as<const char *>());
+      }
+      else
+      {
+        sprintf_P(event, PSTR("%s %s %s"), event, json["type"].as<const char *>(), json["event"].as<const char *>());
+      }
+    }
+    else if (json.containsKey("type"))
     {
       sprintf_P(event, PSTR("%s %s"), event, json["type"].as<const char *>());
     }
-
-    if (json.containsKey("event"))
+    else if (json.containsKey("event"))
     {
       sprintf_P(event, PSTR("%s %s"), event, json["event"].as<const char *>());
     }
