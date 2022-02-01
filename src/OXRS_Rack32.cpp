@@ -402,9 +402,6 @@ void OXRS_Rack32::loop(void)
 
 boolean OXRS_Rack32::publishStatus(JsonVariant json)
 {
-  // Exit early if no network connection
-  if (!_isNetworkConnected()) { return false; }
-
   // Check for something we can show on the screen
   if (json.containsKey("index"))
   {
@@ -435,6 +432,9 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
     _screen.show_event(event);
   }
   
+  // Exit early if no network connection
+  if (!_isNetworkConnected()) { return false; }
+
   boolean success = _mqtt.publishStatus(json);
   if (success) { _screen.trigger_mqtt_tx_led(); }
   return success;
