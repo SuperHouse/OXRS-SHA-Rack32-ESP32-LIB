@@ -409,7 +409,7 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   if (json.containsKey("index"))
   {
     char event[32];
-    sprintf_P(event, PSTR("id:%2d"), json["index"].as<uint8_t>());
+    sprintf_P(event, PSTR("%2d:"), json["index"].as<uint8_t>());
 
     if (json.containsKey("type") && json.containsKey("event"))
     {
