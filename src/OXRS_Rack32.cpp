@@ -408,8 +408,9 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   // Check for something we can show on the screen
   if (json.containsKey("index"))
   {
+    // Pad the index to 3 chars - to ensure a consistent display for all indices
     char event[32];
-    sprintf_P(event, PSTR("idx:%2d"), json["index"].as<uint8_t>());
+    sprintf_P(event, PSTR("[%3d]"), json["index"].as<uint8_t>());
 
     if (json.containsKey("type") && json.containsKey("event"))
     {
