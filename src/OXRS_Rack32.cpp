@@ -349,9 +349,14 @@ void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
   _screen.draw_ports(layout, mcp23017s);
 }
 
-void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue, uint32_t newConfig)
+void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
 {
-  _screen.process(mcp, ioValue, newConfig);
+  _screen.process(mcp, ioValue);
+}
+
+void OXRS_Rack32::setDisplayPortConfig(uint8_t port, int config)
+{
+  _screen.setPortConfig(port, config);
 }
 
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
