@@ -52,9 +52,9 @@ class OXRS_Rack32
     void setConfigSchema(JsonVariant json);
     void setCommandSchema(JsonVariant json);
 
-    void setDisplayPorts(uint8_t mcp23017s, int layout);
-    void setDisplayPortConfig(uint8_t port, int config);
-    void updateDisplayPorts(uint8_t mcp23017, uint16_t ioValue);
+    void setDisplayPortLayout(uint8_t mcpCount, int layout);
+    void setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config);
+    void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
     
     void begin(jsonCallback config, jsonCallback command);
     void loop(void);
