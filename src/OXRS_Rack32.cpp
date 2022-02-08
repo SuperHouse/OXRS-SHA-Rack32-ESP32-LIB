@@ -344,9 +344,14 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
-void OXRS_Rack32::setDisplayPorts(uint8_t mcp23017s, int layout)
+void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
 {
-  _screen.draw_ports(layout, mcp23017s);
+  _screen.draw_ports(layout, mcpCount);
+}
+
+void OXRS_Rack32::setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config)
+{
+  _screen.setPortConfig(mcp, pin, config);
 }
 
 void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)

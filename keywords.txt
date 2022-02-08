@@ -17,7 +17,8 @@ setMqttTopicSuffix	KEYWORD2
 setConfigSchema	KEYWORD2
 setCommandSchema	KEYWORD2
 
-setDisplayPorts	KEYWORD2
+setDisplayPortLayout	KEYWORD2
+setDisplayPortConfig	KEYWORD2
 updateDisplayPorts	KEYWORD2
 
 begin			KEYWORD2
