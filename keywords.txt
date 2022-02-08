@@ -19,7 +19,7 @@ setCommandSchema	KEYWORD2
 
 setDisplayPortLayout	KEYWORD2
 setDisplayPortConfig	KEYWORD2
-updateDisplayPorts		KEYWORD2
+updateDisplayPorts	KEYWORD2
 
 begin			KEYWORD2
 loop			KEYWORD2
