@@ -359,7 +359,7 @@ void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
   _screen.process(mcp, ioValue);
 }
 
-void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
+OXRS_LCD* OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
   // We wrap the callbacks so we can intercept messages intended for the Rack32
   _onConfig = config;
@@ -380,6 +380,9 @@ void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 
   // Set up the temperature sensor
   _initialiseTempSensor();
+  
+  // return pointer to the LCD_LIB
+  return &_screen;
 }
 
 void OXRS_Rack32::loop(void)
@@ -568,6 +571,7 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   
   // Set the temp sensor resolution (higher res takes longer for reading)
   _tempSensor.setResolution(MCP9808_MODE);
+  _lastTempUpdate = -_tempUpdateMs;
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
