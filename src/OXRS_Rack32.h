@@ -19,7 +19,7 @@
 #define       REST_API_PORT             80
 
 // Temperature update internal
-#define       DEFAULT_TEMP_UPDATE_MS    60000
+#define       DEFAULT_TEMP_UPDATE_MS    60000L
 
 // MCP9808 temperature sensor
 #define       MCP9808_I2C_ADDRESS       0x18
@@ -56,7 +56,7 @@ class OXRS_Rack32
     void setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config);
     void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
     
-    void begin(jsonCallback config, jsonCallback command);
+    OXRS_LCD* begin(jsonCallback config, jsonCallback command);
     void loop(void);
 
     boolean publishStatus(JsonVariant json);
