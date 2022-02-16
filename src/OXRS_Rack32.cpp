@@ -571,7 +571,6 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   
   // Set the temp sensor resolution (higher res takes longer for reading)
   _tempSensor.setResolution(MCP9808_MODE);
-  _lastTempUpdate = -_tempUpdateMs;
 }
 
 void OXRS_Rack32::_updateTempSensor(void)
