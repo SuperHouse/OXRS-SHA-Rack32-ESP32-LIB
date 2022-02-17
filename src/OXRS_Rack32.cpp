@@ -334,32 +334,7 @@ void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
   _mqtt.setTopicSuffix(suffix);
 }
 
-void OXRS_Rack32::setConfigSchema(JsonVariant json)
-{
-  _mergeJson(_fwConfigSchema.as<JsonVariant>(), json);
-}
-
-void OXRS_Rack32::setCommandSchema(JsonVariant json)
-{
-  _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
-}
-
-void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
-{
-  _screen.draw_ports(layout, mcpCount);
-}
-
-void OXRS_Rack32::setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config)
-{
-  _screen.setPortConfig(mcp, pin, config);
-}
-
-void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
-{
-  _screen.process(mcp, ioValue);
-}
-
-OXRS_LCD* OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
+void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
   // We wrap the callbacks so we can intercept messages intended for the Rack32
   _onConfig = config;
@@ -380,9 +355,6 @@ OXRS_LCD* OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 
   // Set up the temperature sensor
   _initialiseTempSensor();
-  
-  // return pointer to the LCD_LIB
-  return &_screen;
 }
 
 void OXRS_Rack32::loop(void)
@@ -406,6 +378,36 @@ void OXRS_Rack32::loop(void)
 
   // Check for temperature update
   _updateTempSensor();
+}
+
+void OXRS_Rack32::setConfigSchema(JsonVariant json)
+{
+  _mergeJson(_fwConfigSchema.as<JsonVariant>(), json);
+}
+
+void OXRS_Rack32::setCommandSchema(JsonVariant json)
+{
+  _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
+}
+
+OXRS_LCD* OXRS_Rack32::getLCD()
+{
+  return &_screen;
+}
+
+void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
+{
+  _screen.draw_ports(layout, mcpCount);
+}
+
+void OXRS_Rack32::setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config)
+{
+  _screen.setPortConfig(mcp, pin, config);
+}
+
+void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
+{
+  _screen.process(mcp, ioValue);
 }
 
 boolean OXRS_Rack32::publishStatus(JsonVariant json)

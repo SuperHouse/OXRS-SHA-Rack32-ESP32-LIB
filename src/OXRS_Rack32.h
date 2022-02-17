@@ -48,17 +48,23 @@ class OXRS_Rack32
     void setMqttTopicPrefix(const char * prefix);
     void setMqttTopicSuffix(const char * suffix);
 
+    void begin(jsonCallback config, jsonCallback command);
+    void loop(void);
+
     // Firmware can define the config/commands it supports - for device discovery and adoption
     void setConfigSchema(JsonVariant json);
     void setCommandSchema(JsonVariant json);
 
+    // Return a pointer to the LCD so firmware can customise if required
+    // Should be called after .begin()
+    OXRS_LCD* getLCD(void);
+
+    // Helpers for standard I/O setup of the LCD
     void setDisplayPortLayout(uint8_t mcpCount, int layout);
     void setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config);
     void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
-    
-    OXRS_LCD* begin(jsonCallback config, jsonCallback command);
-    void loop(void);
-
+        
+    // Helpers for publishing to stat/ and tele/ topics
     boolean publishStatus(JsonVariant json);
     boolean publishTelemetry(JsonVariant json);
 
