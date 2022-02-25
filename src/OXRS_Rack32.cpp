@@ -592,7 +592,7 @@ void OXRS_Rack32::_updateTempSensor(void)
   {
     // Read temp from onboard sensor
     float temperature = _tempSensor.readTempC();
-    if (temperature != NAN)
+    if (!isnan(temperature))
     {
       // Display temp on screen
       _screen.showTemp(temperature); 
