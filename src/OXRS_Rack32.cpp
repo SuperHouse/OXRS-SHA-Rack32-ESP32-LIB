@@ -236,6 +236,12 @@ void _mqttConfig(JsonVariant json)
   if (json.containsKey("temperatureUpdateSeconds"))
   {
     _tempUpdateMs = json["temperatureUpdateSeconds"].as<uint32_t>() * 1000L;
+    if (_tempUpdateMs == 0L)
+    {
+      // wipes recent temp display on screen
+      _screen.hideTemp();
+    }
+
   }
   
   // LCD config
@@ -278,7 +284,7 @@ void _mqttCommand(JsonVariant json)
 void _mqttCallback(char * topic, byte * payload, int length) 
 {
   // Update screen
-  _screen.trigger_mqtt_rx_led();
+  _screen.triggerMqttRxLed();
 
   // Pass down to our MQTT handler and check it was processed ok
   int state = _mqtt.receive(topic, payload, length);
@@ -397,7 +403,7 @@ OXRS_LCD* OXRS_Rack32::getLCD()
 
 void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
 {
-  _screen.draw_ports(layout, mcpCount);
+  _screen.drawPorts(layout, mcpCount);
 }
 
 void OXRS_Rack32::setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config)
@@ -439,14 +445,14 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
       sprintf_P(event, PSTR("%s %s"), event, json["event"].as<const char *>());
     }
 
-    _screen.show_event(event);
+    _screen.showEvent(event);
   }
   
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
   boolean success = _mqtt.publishStatus(json);
-  if (success) { _screen.trigger_mqtt_tx_led(); }
+  if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
 
@@ -456,7 +462,7 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
   if (!_isNetworkConnected()) { return false; }
 
   boolean success = _mqtt.publishTelemetry(json);
-  if (success) { _screen.trigger_mqtt_tx_led(); }
+  if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
 
@@ -466,7 +472,7 @@ void OXRS_Rack32::_initialiseScreen(void)
   _screen.begin();
 
   // Display the firmware and logo (either from SPIFFS or PROGMEM)
-  int returnCode = _screen.draw_header(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
+  int returnCode = _screen.drawHeader(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
   
   switch (returnCode)
   {
@@ -588,7 +594,7 @@ void OXRS_Rack32::_updateTempSensor(void)
     if (temperature != NAN)
     {
       // Display temp on screen
-      _screen.show_temp(temperature); 
+      _screen.showTemp(temperature); 
 
       // Publish temp to mqtt
       char payload[8];
