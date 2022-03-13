@@ -61,7 +61,8 @@ class OXRS_Rack32
 
     // Helpers for standard I/O setup of the LCD
     void setDisplayPortLayout(uint8_t mcpCount, int layout);
-    void setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config);
+    void setDisplayPortType(uint8_t mcp, uint8_t pin, int type);
+    void setDisplayPortInvert(uint8_t mcp, uint8_t pin, int invert);
     void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
         
     // Helpers for publishing to stat/ and tele/ topics
