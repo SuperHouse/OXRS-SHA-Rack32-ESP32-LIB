@@ -406,9 +406,14 @@ void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
   _screen.drawPorts(layout, mcpCount);
 }
 
-void OXRS_Rack32::setDisplayPortConfig(uint8_t mcp, uint8_t pin, int config)
+void OXRS_Rack32::setDisplayPinType(uint8_t mcp, uint8_t pin, int type)
 {
-  _screen.setPortConfig(mcp, pin, config);
+  _screen.setPinType(mcp, pin, type);
+}
+
+void OXRS_Rack32::setDisplayPinInvert(uint8_t mcp, uint8_t pin, int invert)
+{
+  _screen.setPinInvert(mcp, pin, invert);
 }
 
 void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)

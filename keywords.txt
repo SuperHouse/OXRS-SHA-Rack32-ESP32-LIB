@@ -18,7 +18,8 @@ setConfigSchema	KEYWORD2
 setCommandSchema	KEYWORD2
 
 setDisplayPortLayout	KEYWORD2
-setDisplayPortConfig	KEYWORD2
+setDisplayPinType	KEYWORD2
+setDisplayPinInvert	KEYWORD2
 updateDisplayPorts	KEYWORD2
 
 begin			KEYWORD2
