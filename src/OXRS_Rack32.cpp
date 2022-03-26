@@ -8,9 +8,8 @@
 #include <Wire.h>                     // For I2C
 #include <Ethernet.h>                 // For networking
 #include <WiFi.h>                     // Required for Ethernet to get MAC
-#include <Adafruit_MCP9808.h>         // For temp sensor
-#include <PubSubClient.h>             // For MQTT
 #include <MqttLogger.h>               // For logging
+#include <Adafruit_MCP9808.h>         // For temp sensor
 
 // Ethernet client
 EthernetClient _client;
@@ -481,7 +480,7 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
 
 size_t OXRS_Rack32::write(uint8_t character)
 {
-  // Pass thru to MQTT logger
+  // Pass to logger - allows firmware to use `rack32.println("Log this!")`
   return _logger.write(character);
 }
 
