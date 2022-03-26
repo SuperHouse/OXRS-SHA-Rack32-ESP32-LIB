@@ -30,7 +30,7 @@
 //  2    0.125°C     130 ms
 //  3    0.0625°C    250 ms
 
-class OXRS_Rack32
+class OXRS_Rack32 : public Print
 {
   public:
     OXRS_Rack32(
@@ -68,6 +68,10 @@ class OXRS_Rack32
     // Helpers for publishing to stat/ and tele/ topics
     boolean publishStatus(JsonVariant json);
     boolean publishTelemetry(JsonVariant json);
+
+    // Implement Print.h wrapper
+    virtual size_t write(uint8_t);
+    using Print::write;
 
   private:
     void _initialiseScreen(void);

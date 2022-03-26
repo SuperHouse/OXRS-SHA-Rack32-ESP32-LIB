@@ -241,7 +241,6 @@ void _mqttConfig(JsonVariant json)
       // wipes recent temp display on screen
       _screen.hideTemp();
     }
-
   }
   
   // LCD config
@@ -291,16 +290,16 @@ void _mqttCallback(char * topic, byte * payload, int length)
   switch (state)
   {
     case MQTT_RECEIVE_ZERO_LENGTH:
-      Serial.println(F("[ra32] empty mqtt payload received"));
+      _mqtt.println(F("[ra32] empty mqtt payload received"));
       break;
     case MQTT_RECEIVE_JSON_ERROR:
-      Serial.println(F("[ra32] failed to deserialise mqtt json payload"));
+      _mqtt.println(F("[ra32] failed to deserialise mqtt json payload"));
       break;
     case MQTT_RECEIVE_NO_CONFIG_HANDLER:
-      Serial.println(F("[ra32] no mqtt config handler"));
+      _mqtt.println(F("[ra32] no mqtt config handler"));
       break;
     case MQTT_RECEIVE_NO_COMMAND_HANDLER:
-      Serial.println(F("[ra32] no mqtt command handler"));
+      _mqtt.println(F("[ra32] no mqtt command handler"));
       break;
   }
 }
@@ -469,6 +468,12 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
   boolean success = _mqtt.publishTelemetry(json);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
+}
+
+size_t OXRS_Rack32::write(uint8_t character)
+{
+  // Pass thru to MQTT logger
+  return _mqtt.write(character);
 }
 
 void OXRS_Rack32::_initialiseScreen(void)
