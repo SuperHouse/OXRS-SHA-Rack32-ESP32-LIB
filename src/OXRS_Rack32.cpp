@@ -8,8 +8,8 @@
 #include <Wire.h>                     // For I2C
 #include <Ethernet.h>                 // For networking
 #include <WiFi.h>                     // Required for Ethernet to get MAC
+#include <MqttLogger.h>               // For logging
 #include <Adafruit_MCP9808.h>         // For temp sensor
-#include <PubSubClient.h>             // For MQTT
 
 // Ethernet client
 EthernetClient _client;
@@ -24,6 +24,9 @@ OXRS_LCD _screen(Ethernet, _mqtt);
 // REST API
 EthernetServer _server(REST_API_PORT);
 OXRS_API _api(_mqtt);
+
+// Logging (topic updated once MQTT connects successfully)
+MqttLogger _logger(_mqttClient, "log", MqttLoggerMode::MqttAndSerial);
 
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
@@ -186,12 +189,17 @@ void _apiAdopt(JsonVariant json)
 /* MQTT callbacks */
 void _mqttConnected() 
 {
+  // MqttLogger doesn't copy the logging topic to an internal
+  // buffer so we have to use a static array here
+  static char logTopic[64];
+  _logger.setTopic(_mqtt.getLogTopic(logTopic));
+
   // Publish device adoption info
   DynamicJsonDocument json(JSON_ADOPT_MAX_SIZE);
   _mqtt.publishAdopt(_api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
-  Serial.println("[ra32] mqtt connected");
+  _logger.println("[ra32] mqtt connected");
 }
 
 void _mqttDisconnected(int state) 
@@ -201,31 +209,31 @@ void _mqttDisconnected(int state)
   switch (state)
   {
     case MQTT_CONNECTION_TIMEOUT:
-      Serial.println(F("[ra32] mqtt connection timeout"));
+      _logger.println(F("[ra32] mqtt connection timeout"));
       break;
     case MQTT_CONNECTION_LOST:
-      Serial.println(F("[ra32] mqtt connection lost"));
+      _logger.println(F("[ra32] mqtt connection lost"));
       break;
     case MQTT_CONNECT_FAILED:
-      Serial.println(F("[ra32] mqtt connect failed"));
+      _logger.println(F("[ra32] mqtt connect failed"));
       break;
     case MQTT_DISCONNECTED:
-      Serial.println(F("[ra32] mqtt disconnected"));
+      _logger.println(F("[ra32] mqtt disconnected"));
       break;
     case MQTT_CONNECT_BAD_PROTOCOL:
-      Serial.println(F("[ra32] mqtt bad protocol"));
+      _logger.println(F("[ra32] mqtt bad protocol"));
       break;
     case MQTT_CONNECT_BAD_CLIENT_ID:
-      Serial.println(F("[ra32] mqtt bad client id"));
+      _logger.println(F("[ra32] mqtt bad client id"));
       break;
     case MQTT_CONNECT_UNAVAILABLE:
-      Serial.println(F("[ra32] mqtt unavailable"));
+      _logger.println(F("[ra32] mqtt unavailable"));
       break;
     case MQTT_CONNECT_BAD_CREDENTIALS:
-      Serial.println(F("[ra32] mqtt bad credentials"));
+      _logger.println(F("[ra32] mqtt bad credentials"));
       break;      
     case MQTT_CONNECT_UNAUTHORIZED:
-      Serial.println(F("[ra32] mqtt unauthorised"));
+      _logger.println(F("[ra32] mqtt unauthorised"));
       break;      
   }
 }
@@ -241,7 +249,6 @@ void _mqttConfig(JsonVariant json)
       // wipes recent temp display on screen
       _screen.hideTemp();
     }
-
   }
   
   // LCD config
@@ -291,16 +298,16 @@ void _mqttCallback(char * topic, byte * payload, int length)
   switch (state)
   {
     case MQTT_RECEIVE_ZERO_LENGTH:
-      Serial.println(F("[ra32] empty mqtt payload received"));
+      _logger.println(F("[ra32] empty mqtt payload received"));
       break;
     case MQTT_RECEIVE_JSON_ERROR:
-      Serial.println(F("[ra32] failed to deserialise mqtt json payload"));
+      _logger.println(F("[ra32] failed to deserialise mqtt json payload"));
       break;
     case MQTT_RECEIVE_NO_CONFIG_HANDLER:
-      Serial.println(F("[ra32] no mqtt config handler"));
+      _logger.println(F("[ra32] no mqtt config handler"));
       break;
     case MQTT_RECEIVE_NO_COMMAND_HANDLER:
-      Serial.println(F("[ra32] no mqtt command handler"));
+      _logger.println(F("[ra32] no mqtt command handler"));
       break;
   }
 }
@@ -471,6 +478,12 @@ boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
   return success;
 }
 
+size_t OXRS_Rack32::write(uint8_t character)
+{
+  // Pass to logger - allows firmware to use `rack32.println("Log this!")`
+  return _logger.write(character);
+}
+
 void OXRS_Rack32::_initialiseScreen(void)
 {
   // Initialise the LCD
@@ -482,16 +495,16 @@ void OXRS_Rack32::_initialiseScreen(void)
   switch (returnCode)
   {
     case LCD_INFO_LOGO_FROM_SPIFFS:
-      Serial.println(F("[ra32] logo loaded from SPIFFS"));
+      _logger.println(F("[ra32] logo loaded from SPIFFS"));
       break;
     case LCD_INFO_LOGO_FROM_PROGMEM:
-      Serial.println(F("[ra32] logo loaded from PROGMEM"));
+      _logger.println(F("[ra32] logo loaded from PROGMEM"));
       break;
     case LCD_INFO_LOGO_DEFAULT:
-      Serial.println(F("[ra32] no logo found, using default OXRS logo"));
+      _logger.println(F("[ra32] no logo found, using default OXRS logo"));
       break;
     case LCD_ERR_NO_LOGO:
-      Serial.println(F("[ra32] no logo found"));
+      _logger.println(F("[ra32] no logo found"));
       break;
   }
 }
@@ -508,8 +521,8 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   // Display the MAC address on serial
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  Serial.print(F("[ra32] mac address: "));
-  Serial.println(mac_display);
+  _logger.print(F("[ra32] mac address: "));
+  _logger.println(mac_display);
 
   // Initialise ethernet library
   Ethernet.init(ETHERNET_CS_PIN);
@@ -524,14 +537,14 @@ void OXRS_Rack32::_initialiseEthernet(byte * mac)
   delay(350);
 
   // Get an IP address via DHCP and display on serial
-  Serial.print(F("[ra32] ip address: "));
+  _logger.print(F("[ra32] ip address: "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
-    Serial.println(Ethernet.localIP());
+    _logger.println(Ethernet.localIP());
   }
   else
   {
-    Serial.println(F("none"));
+    _logger.println(F("none"));
   }
 }
 
@@ -577,8 +590,8 @@ void OXRS_Rack32::_initialiseTempSensor(void)
   _tempSensorFound = _tempSensor.begin(MCP9808_I2C_ADDRESS);
   if (!_tempSensorFound)
   {
-    Serial.print(F("[ra32] no MCP9808 temp sensor found at 0x"));
-    Serial.println(MCP9808_I2C_ADDRESS, HEX);
+    _logger.print(F("[ra32] no MCP9808 temp sensor found at 0x"));
+    _logger.println(MCP9808_I2C_ADDRESS, HEX);
     return;
   }
   
