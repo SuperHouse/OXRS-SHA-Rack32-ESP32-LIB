@@ -81,6 +81,22 @@ void _getFirmwareJson(JsonVariant json)
   firmware["version"] = _fwVersion;
 }
 
+void _getSystemJson(JsonVariant json)
+{
+  JsonObject system = json.createNestedObject("system");
+
+  system["heapUsedBytes"] = ESP.getHeapSize();
+  system["heapFreeBytes"] = ESP.getFreeHeap();
+  system["heapMaxAllocBytes"] = ESP.getMaxAllocHeap();
+  system["flashChipSizeBytes"] = ESP.getFlashChipSize();
+
+  system["sketchSpaceUsedBytes"] = ESP.getSketchSize();
+  system["sketchSpaceTotalBytes"] = ESP.getFreeSketchSpace();
+
+  system["fileSystemUsedBytes"] = SPIFFS.usedBytes();
+  system["fileSystemTotalBytes"] = SPIFFS.totalBytes();
+}
+
 void _getNetworkJson(JsonVariant json)
 {
   byte mac[6];
@@ -181,6 +197,7 @@ void _apiAdopt(JsonVariant json)
 {
   // Build device adoption info
   _getFirmwareJson(json);
+  _getSystemJson(json);
   _getNetworkJson(json);
   _getConfigSchemaJson(json);
   _getCommandSchemaJson(json);
