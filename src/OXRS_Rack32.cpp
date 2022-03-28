@@ -11,6 +11,24 @@
 #include <MqttLogger.h>               // For logging
 #include <Adafruit_MCP9808.h>         // For temp sensor
 
+// Macro for converting env vars to strings
+#define STRINGIFY(s) STRINGIFY1(s)
+#define STRINGIFY1(s) #s
+
+// Default firmware details if not found
+#ifndef FW_NAME
+#define FW_NAME       PLEASE_DEFINE_FW_NAME
+#endif
+#ifndef FW_SHORT_NAME
+#define FW_SHORT_NAME Please define FW_SHORT_NAME
+#endif
+#ifndef FW_MAKER
+#define FW_MAKER      OXRS Core Team
+#endif
+#ifndef FW_VERSION
+#define FW_VERSION    DEBUG
+#endif
+
 // Ethernet client
 EthernetClient _client;
 
@@ -31,11 +49,7 @@ MqttLogger _logger(_mqttClient, "log", MqttLoggerMode::MqttAndSerial);
 // Temp sensor
 Adafruit_MCP9808 _tempSensor;
 
-// Firmware details
-const char *    _fwName;
-const char *    _fwShortName;
-const char *    _fwMaker;
-const char *    _fwVersion;
+// Firmware logo
 const uint8_t * _fwLogo;
  
 // Supported firmware config and command schemas
@@ -75,10 +89,10 @@ void _getFirmwareJson(JsonVariant json)
 {
   JsonObject firmware = json.createNestedObject("firmware");
 
-  firmware["name"] = _fwName;
-  firmware["shortName"] = _fwShortName;
-  firmware["maker"] = _fwMaker;
-  firmware["version"] = _fwVersion;
+  firmware["name"] = STRINGIFY(FW_NAME);
+  firmware["shortName"] = STRINGIFY(FW_SHORT_NAME);
+  firmware["maker"] = STRINGIFY(FW_MAKER);
+  firmware["version"] = STRINGIFY(FW_VERSION);
 }
 
 void _getSystemJson(JsonVariant json)
@@ -117,7 +131,7 @@ void _getConfigSchemaJson(JsonVariant json)
   
   // Config schema metadata
   configSchema["$schema"] = JSON_SCHEMA_VERSION;
-  configSchema["title"] = _fwName;
+  configSchema["title"] = STRINGIFY(FW_SHORT_NAME);
   configSchema["type"] = "object";
 
   JsonObject properties = configSchema.createNestedObject("properties");
@@ -175,7 +189,7 @@ void _getCommandSchemaJson(JsonVariant json)
   
   // Command schema metadata
   commandSchema["$schema"] = JSON_SCHEMA_VERSION;
-  commandSchema["title"] = _fwName;
+  commandSchema["title"] = STRINGIFY(FW_SHORT_NAME);
   commandSchema["type"] = "object";
 
   JsonObject properties = commandSchema.createNestedObject("properties");
@@ -330,13 +344,9 @@ void _mqttCallback(char * topic, byte * payload, int length)
 }
 
 /* Main program */
-OXRS_Rack32::OXRS_Rack32(const char * fwName, const char * fwShortName, const char * fwMaker, const char * fwVersion, const uint8_t * fwLogo)
+OXRS_Rack32::OXRS_Rack32(const uint8_t * fwLogo)
 {
-  _fwName       = fwName;
-  _fwShortName  = fwShortName;
-  _fwMaker      = fwMaker;
-  _fwVersion    = fwVersion;
-  _fwLogo       = fwLogo;
+  _fwLogo = fwLogo;
 }
 
 void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
@@ -366,6 +376,15 @@ void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
 
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
+  // Get our firmware details
+  DynamicJsonDocument json(128);
+  _getFirmwareJson(json.as<JsonVariant>());
+
+  // Log firmware details
+  _logger.print(F("[ra32] "));
+  serializeJson(json, _logger);
+  _logger.println();
+
   // We wrap the callbacks so we can intercept messages intended for the Rack32
   _onConfig = config;
   _onCommand = command;
@@ -507,7 +526,7 @@ void OXRS_Rack32::_initialiseScreen(void)
   _screen.begin();
 
   // Display the firmware and logo (either from SPIFFS or PROGMEM)
-  int returnCode = _screen.drawHeader(_fwShortName, _fwMaker, _fwVersion, "ESP32", _fwLogo);
+  int returnCode = _screen.drawHeader(STRINGIFY(FW_SHORT_NAME), STRINGIFY(FW_MAKER), STRINGIFY(FW_VERSION), "ESP32", _fwLogo);
   
   switch (returnCode)
   {
