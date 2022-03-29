@@ -570,7 +570,7 @@ void OXRS_Rack32::_initialiseScreen(void)
   }
 }
 
-void _initialiseNetwork(byte * mac)
+void OXRS_Rack32::_initialiseNetwork(byte * mac)
 {
   // Get WiFi base MAC address
   WiFi.macAddress(mac);
