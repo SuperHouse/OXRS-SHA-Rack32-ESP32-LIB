@@ -11,6 +11,10 @@
 #include <MqttLogger.h>               // For logging
 #include <Adafruit_MCP9808.h>         // For temp sensor
 
+#if defined(WIFI_MODE)
+#include <WiFiManager.h>              // For WiFi AP config
+#endif
+
 // Macro for converting env vars to strings
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
@@ -439,8 +443,8 @@ void OXRS_Rack32::loop(void)
     
     // Handle any REST API requests
 #if defined(WIFI_MODE)
-    WiFiClient client = server.available();
-    api.checkWifi(&client);
+    WiFiClient client = _server.available();
+    _api.checkWifi(&client);
 #else
     EthernetClient client = _server.available();
     _api.checkEthernet(&client);
