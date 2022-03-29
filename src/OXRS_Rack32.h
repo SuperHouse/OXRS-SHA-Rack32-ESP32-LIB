@@ -70,7 +70,7 @@ class OXRS_Rack32 : public Print
 
   private:
     void _initialiseScreen(void);
-    void _initialiseEthernet(byte * mac);
+    void _initialiseNetwork(byte * mac);
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
     void _initialiseTempSensor(void);
