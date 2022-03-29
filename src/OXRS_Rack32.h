@@ -6,8 +6,8 @@
 #define OXRS_RACK32_H
 
 #include <OXRS_MQTT.h>                // For MQTT pub/sub
-#include <OXRS_LCD.h>                 // For LCD runtime displays
 #include <OXRS_API.h>                 // For REST API
+#include <OXRS_LCD.h>                 // For LCD runtime displays
 
 // Ethernet
 #define       ETHERNET_CS_PIN           26
@@ -70,7 +70,7 @@ class OXRS_Rack32 : public Print
 
   private:
     void _initialiseScreen(void);
-    void _initialiseEthernet(byte * mac);
+    void _initialiseNetwork(byte * mac);
     void _initialiseMqtt(byte * mac);
     void _initialiseRestApi(void);
     void _initialiseTempSensor(void);
