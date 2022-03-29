@@ -598,7 +598,7 @@ void initialiseNetwork(byte * mac)
   bool success = wm.autoConnect("OXRS_WiFi", "superhouse");
 
   _logger.print(F("[ra32] ip address: "));
-  _logger.println(success ? WiFi.localIP() : IPAddress(0, 0, 0));
+  _logger.println(success ? WiFi.localIP() : IPAddress(0, 0, 0, 0));
 #else
   _logger.print(F("[ra32] ethernet mac address: "));
   _logger.println(mac_display);
@@ -619,7 +619,7 @@ void initialiseNetwork(byte * mac)
   bool success = Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS);
   
   _logger.print(F("[ra32] ip address: "));
-  _logger.println(success ? Ethernet.localIP() : IPAddress(0, 0, 0));
+  _logger.println(success ? Ethernet.localIP() : IPAddress(0, 0, 0, 0));
 #endif
 }
 
