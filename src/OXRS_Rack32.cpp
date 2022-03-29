@@ -46,15 +46,15 @@ EthernetServer _server(REST_API_PORT);
 PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
 
+// REST API
+OXRS_API _api(_mqtt);
+
 // LCD screen
 #if defined(WIFI_MODE)
 OXRS_LCD _screen(WiFi, _mqtt);
 #else
 OXRS_LCD _screen(Ethernet, _mqtt);
 #endif
-
-// REST API
-OXRS_API _api(_mqtt);
 
 // Logging (topic updated once MQTT connects successfully)
 MqttLogger _logger(_mqttClient, "log", MqttLoggerMode::MqttAndSerial);
