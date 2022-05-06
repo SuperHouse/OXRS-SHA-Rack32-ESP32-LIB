@@ -444,10 +444,10 @@ void OXRS_Rack32::loop(void)
     // Handle any REST API requests
 #if defined(WIFI_MODE)
     WiFiClient client = _server.available();
-    _api.checkWifi(&client);
+    _api.loop(&client);
 #else
     EthernetClient client = _server.available();
-    _api.checkEthernet(&client);
+    _api.loop(&client);
 #endif
   }
     
