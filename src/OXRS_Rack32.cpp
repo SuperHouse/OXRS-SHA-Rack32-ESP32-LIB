@@ -108,7 +108,7 @@ void _getFirmwareJson(JsonVariant json)
   firmware["version"] = STRINGIFY(FW_VERSION);
   
 #if defined(FW_GITHUB_URL)
-  firmware["githubUrl"] = STRINGIFY(FW_GITHUB_URL);
+  firmware["githubUrl"] = FW_GITHUB_URL;
 #endif
 }
 
