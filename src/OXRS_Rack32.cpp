@@ -15,10 +15,6 @@
 #include <WiFiManager.h>              // For WiFi AP config
 #endif
 
-// Macro for converting env vars to strings
-#define STRINGIFY(s) STRINGIFY1(s)
-#define STRINGIFY1(s) #s
-
 // Default firmware details if not found
 #ifndef FW_NAME
 #define FW_NAME       PLEASE_DEFINE_FW_NAME
@@ -102,10 +98,10 @@ void _getFirmwareJson(JsonVariant json)
 {
   JsonObject firmware = json.createNestedObject("firmware");
 
-  firmware["name"] = STRINGIFY(FW_NAME);
-  firmware["shortName"] = STRINGIFY(FW_SHORT_NAME);
-  firmware["maker"] = STRINGIFY(FW_MAKER);
-  firmware["version"] = STRINGIFY(FW_VERSION);
+  firmware["name"] = FW_NAME;
+  firmware["shortName"] = FW_SHORT_NAME;
+  firmware["maker"] = FW_MAKER;
+  firmware["version"] = FW_VERSION;
   
 #if defined(FW_GITHUB_URL)
   firmware["githubUrl"] = FW_GITHUB_URL;
@@ -157,7 +153,7 @@ void _getConfigSchemaJson(JsonVariant json)
   
   // Config schema metadata
   configSchema["$schema"] = JSON_SCHEMA_VERSION;
-  configSchema["title"] = STRINGIFY(FW_SHORT_NAME);
+  configSchema["title"] = FW_SHORT_NAME;
   configSchema["type"] = "object";
 
   JsonObject properties = configSchema.createNestedObject("properties");
@@ -215,7 +211,7 @@ void _getCommandSchemaJson(JsonVariant json)
   
   // Command schema metadata
   commandSchema["$schema"] = JSON_SCHEMA_VERSION;
-  commandSchema["title"] = STRINGIFY(FW_SHORT_NAME);
+  commandSchema["title"] = FW_SHORT_NAME;
   commandSchema["type"] = "object";
 
   JsonObject properties = commandSchema.createNestedObject("properties");
@@ -559,7 +555,7 @@ void OXRS_Rack32::_initialiseScreen(void)
   _screen.begin();
 
   // Display the firmware and logo (either from SPIFFS or PROGMEM)
-  int returnCode = _screen.drawHeader(STRINGIFY(FW_SHORT_NAME), STRINGIFY(FW_MAKER), STRINGIFY(FW_VERSION), "ESP32", _fwLogo);
+  int returnCode = _screen.drawHeader(FW_SHORT_NAME, FW_MAKER, FW_VERSION, "ESP32", _fwLogo);
   
   switch (returnCode)
   {
