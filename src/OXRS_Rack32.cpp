@@ -702,11 +702,8 @@ void OXRS_Rack32::_updateTempSensor(void)
       _screen.showTemp(temperature); 
 
       // Publish temp to mqtt
-      char payload[8];
-      sprintf(payload, "%2.1f", temperature);
-    
       StaticJsonDocument<32> json;
-      json["temperature"] = payload;
+      json["temperature"] = temperature;
       publishTelemetry(json.as<JsonVariant>());
     }
     
