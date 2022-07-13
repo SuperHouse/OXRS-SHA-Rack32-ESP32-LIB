@@ -19,20 +19,6 @@
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
 
-// Default firmware details if not found
-#ifndef FW_NAME
-#define FW_NAME       PLEASE_DEFINE_FW_NAME
-#endif
-#ifndef FW_SHORT_NAME
-#define FW_SHORT_NAME Please define FW_SHORT_NAME
-#endif
-#ifndef FW_MAKER
-#define FW_MAKER      OXRS Core Team
-#endif
-#ifndef FW_VERSION
-#define FW_VERSION    DEBUG
-#endif
-
 // Network client (for MQTT)/server (for REST API)
 #if defined(WIFI_MODE)
 WiFiClient _client;
