@@ -58,6 +58,7 @@ class OXRS_Rack32 : public Print
     void setDisplayPortLayout(uint8_t mcpCount, int layout);
     void setDisplayPinType(uint8_t mcp, uint8_t pin, int type);
     void setDisplayPinInvert(uint8_t mcp, uint8_t pin, int invert);
+    void setDisplayPinDisabled(uint8_t mcp, uint8_t pin, int disabled);
     void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
 
     // Helpers for registering custom REST API endpoints
