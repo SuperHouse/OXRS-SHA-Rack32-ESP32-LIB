@@ -59,6 +59,10 @@ class OXRS_Rack32 : public Print
     void setDisplayPinType(uint8_t mcp, uint8_t pin, int type);
     void setDisplayPinInvert(uint8_t mcp, uint8_t pin, int invert);
     void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
+
+    // Helpers for registering custom REST API endpoints
+    void apiGet(const char * path, Router::Middleware * middleware);
+    void apiPost(const char * path, Router::Middleware * middleware);
         
     // Helpers for publishing to stat/ and tele/ topics
     boolean publishStatus(JsonVariant json);
