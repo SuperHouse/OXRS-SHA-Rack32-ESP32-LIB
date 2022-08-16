@@ -474,6 +474,16 @@ void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
   _screen.process(mcp, ioValue);
 }
 
+void OXRS_Rack32::apiGet(const char * path, Router::Middleware * middleware)
+{
+  _api.get(path, middleware);
+}
+
+void OXRS_Rack32::apiPost(const char * path, Router::Middleware * middleware)
+{
+  _api.post(path, middleware);
+}
+
 boolean OXRS_Rack32::publishStatus(JsonVariant json)
 {
   // Check for something we can show on the screen
