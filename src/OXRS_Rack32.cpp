@@ -52,8 +52,8 @@ Adafruit_MCP9808 _tempSensor;
 const uint8_t * _fwLogo;
  
 // Supported firmware config and command schemas
-DynamicJsonDocument _fwConfigSchema(4096);
-DynamicJsonDocument _fwCommandSchema(4096);
+DynamicJsonDocument _fwConfigSchema(8192);
+DynamicJsonDocument _fwCommandSchema(8192);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
