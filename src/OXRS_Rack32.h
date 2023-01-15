@@ -15,6 +15,10 @@
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
+// I2C
+#define       I2C_SDA                   21
+#define       I2C_SCL                   22
+
 // REST API
 #define       REST_API_PORT             80
 
