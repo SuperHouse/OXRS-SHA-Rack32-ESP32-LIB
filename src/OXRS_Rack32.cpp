@@ -117,8 +117,10 @@ void _getSystemJson(JsonVariant json)
   system["sketchSpaceUsedBytes"] = ESP.getSketchSize();
   system["sketchSpaceTotalBytes"] = ESP.getFreeSketchSpace();
 
-  system["fileSystemUsedBytes"] = SPIFFS.usedBytes();
-  system["fileSystemTotalBytes"] = SPIFFS.totalBytes();
+  FSInfo fsInfo;
+  SPIFFS.info(fsInfo);  
+  system["fileSystemUsedBytes"] = fsInfo.usedBytes;
+  system["fileSystemTotalBytes"] = fsInfo.totalBytes;
 }
 
 void _getNetworkJson(JsonVariant json)
