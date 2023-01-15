@@ -52,8 +52,8 @@ Adafruit_MCP9808 _tempSensor;
 const uint8_t * _fwLogo;
  
 // Supported firmware config and command schemas
-DynamicJsonDocument _fwConfigSchema(8192);
-DynamicJsonDocument _fwCommandSchema(8192);
+DynamicJsonDocument _fwConfigSchema(JSON_CONFIG_MAX_SIZE);
+DynamicJsonDocument _fwCommandSchema(JSON_COMMAND_MAX_SIZE);
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -70,11 +70,18 @@ uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
 {
-  if (src.is<JsonObject>())
+  if (src.is<JsonObjectConst>())
   {
-    for (auto kvp : src.as<JsonObjectConst>())
+    for (JsonPairConst kvp : src.as<JsonObjectConst>())
     {
-      _mergeJson(dst.getOrAddMember(kvp.key()), kvp.value());
+      if (dst[kvp.key()])
+      {
+        _mergeJson(dst[kvp.key()], kvp.value());
+      }
+      else
+      {
+        dst[kvp.key()] = kvp.value();
+      }
     }
   }
   else
