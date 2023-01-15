@@ -8,6 +8,7 @@
 #include <Wire.h>                     // For I2C
 #include <Ethernet.h>                 // For networking
 #include <WiFi.h>                     // Required for Ethernet to get MAC
+#include <LittleFS.h>                 // For file system access
 #include <MqttLogger.h>               // For logging
 #include <Adafruit_MCP9808.h>         // For temp sensor
 
@@ -117,8 +118,8 @@ void _getSystemJson(JsonVariant json)
   system["sketchSpaceUsedBytes"] = ESP.getSketchSize();
   system["sketchSpaceTotalBytes"] = ESP.getFreeSketchSpace();
 
-  system["fileSystemUsedBytes"] = SPIFFS.usedBytes();
-  system["fileSystemTotalBytes"] = SPIFFS.totalBytes();
+  system["fileSystemUsedBytes"] = LittleFS.usedBytes();
+  system["fileSystemTotalBytes"] = LittleFS.totalBytes();
 }
 
 void _getNetworkJson(JsonVariant json)
