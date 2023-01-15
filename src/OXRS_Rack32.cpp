@@ -118,7 +118,7 @@ void _getSystemJson(JsonVariant json)
   system["sketchSpaceTotalBytes"] = ESP.getFreeSketchSpace();
 
   FSInfo fsInfo;
-  SPIFFS.info(fsInfo);  
+  LittleFS.info(fsInfo);  
   system["fileSystemUsedBytes"] = fsInfo.usedBytes;
   system["fileSystemTotalBytes"] = fsInfo.totalBytes;
 }
