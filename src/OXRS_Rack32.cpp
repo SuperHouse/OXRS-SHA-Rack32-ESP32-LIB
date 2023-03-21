@@ -611,9 +611,16 @@ void OXRS_Rack32::_initialiseNetwork(byte * mac)
   // Ensure we are in the correct WiFi mode
   WiFi.mode(WIFI_STA);
 
-  // Connect using saved creds, or start captive portal if none found
-  // NOTE: Blocks until connected or the portal is closed
+  // We use WifiManager library from https://github.com/tzapu/WiFiManager
+  // to handle WiFi connection and credential persistence etc.
   WiFiManager wm;
+
+  // If the captive portal is launched and nothing happens for a while then
+  // continue - this helps if we come online before an AP (e.g. power outage)
+  // and prevents us sitting in captive portal mode indefinitely
+  wm.setConfigPortalTimeout(WM_CONFIG_PORTAL_TIMEOUT_S);
+
+  // Connect using saved creds, or start captive portal if none found
   bool success = wm.autoConnect("OXRS_WiFi", "superhouse");
 
   _logger.print(F("[ra32] ip address: "));
