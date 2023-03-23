@@ -32,6 +32,7 @@ EthernetServer _server(REST_API_PORT);
 // MQTT client
 PubSubClient _mqttClient(_client);
 OXRS_MQTT _mqtt(_mqttClient);
+uint8_t _mqttReconnectCount;
 
 // REST API
 OXRS_API _api(_mqtt);
@@ -251,6 +252,9 @@ void _mqttConnected()
 
   // Log the fact we are now connected
   _logger.println("[ra32] mqtt connected");
+
+  // Reset our reconnect counter
+  _mqttReconnectCount = 0;
 }
 
 void _mqttDisconnected(int state) 
@@ -437,7 +441,20 @@ void OXRS_Rack32::loop(void)
 #endif
     
     // Handle any MQTT messages
-    _mqtt.loop();
+    if (_mqtt.loop() == MQTT_RECONNECT_FAILED)
+    {
+      // If MQTT reconnect fails too many times, try re-initialising the network/rebooting
+      _mqttReconnectCount++;
+      if (_mqttReconnectCount >= MQTT_RECONNECT_REBOOT_COUNT)
+      {
+        ESP.restart();
+      }
+      else if (_mqttReconnectCount >= MQTT_RECONNECT_RESET_COUNT)
+      {
+        byte mac[6];
+        _initialiseNetwork(mac);
+      }
+    }
     
     // Handle any REST API requests
 #if defined(WIFI_MODE)

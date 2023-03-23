@@ -5,9 +5,9 @@
 #ifndef OXRS_RACK32_H
 #define OXRS_RACK32_H
 
-#include <OXRS_MQTT.h>                // For MQTT pub/sub
-#include <OXRS_API.h>                 // For REST API
-#include <OXRS_LCD.h>                 // For LCD runtime displays
+#include <OXRS_MQTT.h>                    // For MQTT pub/sub
+#include <OXRS_API.h>                     // For REST API
+#include <OXRS_LCD.h>                     // For LCD runtime displays
 
 // WifiManager
 #define       WM_CONFIG_PORTAL_TIMEOUT_S  300
@@ -17,6 +17,10 @@
 #define       WIZNET_RESET_PIN            13
 #define       DHCP_TIMEOUT_MS             15000
 #define       DHCP_RESPONSE_TIMEOUT_MS    4000
+
+// MQTT
+#define       MQTT_RECONNECT_RESET_COUNT  5
+#define       MQTT_RECONNECT_REBOOT_COUNT 10
 
 // I2C
 #define       I2C_SDA                     21
@@ -91,6 +95,7 @@ class OXRS_Rack32 : public Print
     uint32_t _lastTempUpdate;
     
     boolean _isNetworkConnected(void);
+    void _resetNetwork();
 };
 
 #endif
