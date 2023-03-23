@@ -616,15 +616,20 @@ void OXRS_Rack32::_initialiseNetwork(byte * mac)
   WiFiManager wm;
 
   // If the captive portal is launched and nothing happens for a while then
-  // continue - this helps if we come online before an AP (e.g. power outage)
+  // reboot - this helps if we come online before an AP (e.g. power outage)
   // and prevents us sitting in captive portal mode indefinitely
   wm.setConfigPortalTimeout(WM_CONFIG_PORTAL_TIMEOUT_S);
 
   // Connect using saved creds, or start captive portal if none found
-  bool success = wm.autoConnect("OXRS_WiFi", "superhouse");
+  // NOTE: Blocks until connected or the portal is closed
+  if (!wm.autoConnect("OXRS_WiFi", "superhouse"))
+  {
+    _logger.println(F("[ra32] failed to connect to wifi access point, rebooting"));
+    ESP.restart();
+  }
 
   _logger.print(F("[ra32] ip address: "));
-  _logger.println(success ? WiFi.localIP() : IPAddress(0, 0, 0, 0));
+  _logger.println(WiFi.localIP());
 #else
   _logger.print(F("[ra32] ethernet mac address: "));
   _logger.println(mac_display);
