@@ -9,25 +9,28 @@
 #include <OXRS_API.h>                 // For REST API
 #include <OXRS_LCD.h>                 // For LCD runtime displays
 
+// WifiManager
+#define       WM_CONFIG_PORTAL_TIMEOUT_S  300
+
 // Ethernet
-#define       ETHERNET_CS_PIN           26
-#define       WIZNET_RESET_PIN          13
-#define       DHCP_TIMEOUT_MS           15000
-#define       DHCP_RESPONSE_TIMEOUT_MS  4000
+#define       ETHERNET_CS_PIN             26
+#define       WIZNET_RESET_PIN            13
+#define       DHCP_TIMEOUT_MS             15000
+#define       DHCP_RESPONSE_TIMEOUT_MS    4000
 
 // I2C
-#define       I2C_SDA                   21
-#define       I2C_SCL                   22
+#define       I2C_SDA                     21
+#define       I2C_SCL                     22
 
 // REST API
-#define       REST_API_PORT             80
+#define       REST_API_PORT               80
 
 // Temperature update internal
-#define       DEFAULT_TEMP_UPDATE_MS    60000L
+#define       DEFAULT_TEMP_UPDATE_MS      60000L
 
 // MCP9808 temperature sensor
-#define       MCP9808_I2C_ADDRESS       0x18
-#define       MCP9808_MODE              0
+#define       MCP9808_I2C_ADDRESS         0x18
+#define       MCP9808_MODE                0
 //  Mode Resolution  SampleTime
 //  0    0.5°C       30 ms
 //  1    0.25°C      65 ms
