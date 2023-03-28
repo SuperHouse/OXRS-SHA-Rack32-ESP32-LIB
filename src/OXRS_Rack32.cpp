@@ -445,14 +445,14 @@ void OXRS_Rack32::loop(void)
     {
       // If MQTT reconnect fails too many times, try re-initialising the network/rebooting
       _mqttReconnectCount++;
-      if (_mqttReconnectCount >= MQTT_RECONNECT_REBOOT_COUNT)
-      {
-        ESP.restart();
-      }
-      else if (_mqttReconnectCount >= MQTT_RECONNECT_RESET_COUNT)
+      if (_mqttReconnectCount = MQTT_RECONNECT_RESET_COUNT)
       {
         byte mac[6];
         _initialiseNetwork(mac);
+      }
+      else if (_mqttReconnectCount = MQTT_RECONNECT_REBOOT_COUNT)
+      {
+        ESP.restart();
       }
     }
     
