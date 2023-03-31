@@ -443,16 +443,11 @@ void OXRS_Rack32::loop(void)
     // Handle any MQTT messages
     if (_mqtt.loop() == MQTT_RECONNECT_FAILED)
     {
-      // If MQTT reconnect fails too many times, try re-initialising the network/rebooting
-      _mqttReconnectCount++;
-      if (_mqttReconnectCount = MQTT_RECONNECT_RESET_COUNT)
+      // If MQTT reconnect keeps failing try re-initialising the network
+      if (++_mqttReconnectCount % MQTT_RECONNECT_RESET_COUNT == 0)
       {
         byte mac[6];
         _initialiseNetwork(mac);
-      }
-      else if (_mqttReconnectCount = MQTT_RECONNECT_REBOOT_COUNT)
-      {
-        ESP.restart();
       }
     }
     

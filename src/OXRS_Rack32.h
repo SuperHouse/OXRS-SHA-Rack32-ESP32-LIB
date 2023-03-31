@@ -18,9 +18,10 @@
 #define       DHCP_TIMEOUT_MS             15000
 #define       DHCP_RESPONSE_TIMEOUT_MS    4000
 
-// MQTT
+// Re-initialise the network every 'n' failed MQTT reconnects (assuming network is connected)
+// A brute force attempt to solve a problem when multiple disconnects (due to patchy network)
+// seems to lock up the MQTT library and it stops reconnecting
 #define       MQTT_RECONNECT_RESET_COUNT  5
-#define       MQTT_RECONNECT_REBOOT_COUNT 10
 
 // I2C
 #define       I2C_SDA                     21
@@ -95,7 +96,6 @@ class OXRS_Rack32 : public Print
     uint32_t _lastTempUpdate;
     
     boolean _isNetworkConnected(void);
-    void _resetNetwork();
 };
 
 #endif
