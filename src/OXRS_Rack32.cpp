@@ -468,7 +468,40 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
-OXRS_LCD* OXRS_Rack32::getLCD()
+char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * component, char * id)
+{
+  char uniqueId[64];
+  sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
+
+  sprintf_P(topic, PSTR("homeassistant/%s/%s/config"), component, uniqueId);
+  return topic;
+}
+
+void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * name, char * id)
+{
+  char uniqueId[64];
+  sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
+
+  json["name"] = name;
+  json["uniq_id"] = uniqueId;
+  json["obj_id"] = uniqueId;
+
+  char topic[64];
+  json["stat_t"] = _mqtt.getStatusTopic(topic);
+  json["avty_t"] = _mqtt.getLwtTopic(topic);
+  json["avty_tpl"] = "{% if value_json.online == true %}online{% else %}offline{% endif %}";
+
+  JsonObject dev = json.createNestedObject("dev");
+  dev["name"] = _mqtt.getClientId();
+  dev["mf"] = FW_MAKER;
+  dev["mdl"] = FW_NAME;
+  dev["sw"] = STRINGIFY(FW_VERSION);
+
+  JsonArray ids = dev.createNestedArray("ids");
+  ids.add(_mqtt.getClientId());
+}
+
+OXRS_LCD * OXRS_Rack32::getLCD()
 {
   return &_screen;
 }
@@ -508,7 +541,7 @@ void OXRS_Rack32::apiPost(const char * path, Router::Middleware * middleware)
   _api.post(path, middleware);
 }
 
-boolean OXRS_Rack32::publishStatus(JsonVariant json)
+bool OXRS_Rack32::publishStatus(JsonVariant json)
 {
   // Check for something we can show on the screen
   if (json.containsKey("index"))
@@ -543,17 +576,27 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  boolean success = _mqtt.publishStatus(json);
+  bool success = _mqtt.publishStatus(json);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
 
-boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
+bool OXRS_Rack32::publishTelemetry(JsonVariant json)
 {
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  boolean success = _mqtt.publishTelemetry(json);
+  bool success = _mqtt.publishTelemetry(json);
+  if (success) { _screen.triggerMqttTxLed(); }
+  return success;
+}
+
+bool OXRS_Rack32::publish(JsonVariant json, char * topic, bool retained)
+{
+  // Exit early if no network connection
+  if (!_isNetworkConnected()) { return false; }
+
+  bool success = _mqtt.publish(json, topic, retained);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
@@ -735,7 +778,7 @@ void OXRS_Rack32::_updateTempSensor(void)
   }
 }
 
-boolean OXRS_Rack32::_isNetworkConnected(void)
+bool OXRS_Rack32::_isNetworkConnected(void)
 {
 #if defined(WIFI_MODE)
   return WiFi.status() == WL_CONNECTED;
