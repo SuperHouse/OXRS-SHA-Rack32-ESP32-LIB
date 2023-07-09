@@ -470,10 +470,7 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
 
 char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * component, char * id)
 {
-  char uniqueId[64];
-  sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
-
-  sprintf_P(topic, PSTR("homeassistant/%s/%s/config"), component, uniqueId);
+  sprintf_P(topic, PSTR("homeassistant/%s/%s/%s/config"), component, _mqtt.getClientId(), id);
   return topic;
 }
 
