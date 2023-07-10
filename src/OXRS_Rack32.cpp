@@ -468,18 +468,19 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
-char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * id, char * component)
+char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * prefix, char * component, char * id)
 {
-  sprintf_P(topic, PSTR("homeassistant/%s/%s/%s/config"), component, _mqtt.getClientId(), id);
+  sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), prefix, component, _mqtt.getClientId(), id);
   return topic;
 }
 
-void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id)
+void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, char * name)
 {
   char uniqueId[64];
   sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
   json["uniq_id"] = uniqueId;
   json["obj_id"] = uniqueId;
+  json["name"] = name;
 
   char topic[64];
   json["stat_t"] = _mqtt.getStatusTopic(topic);

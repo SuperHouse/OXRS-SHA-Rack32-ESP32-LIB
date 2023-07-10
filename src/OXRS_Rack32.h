@@ -59,8 +59,8 @@ class OXRS_Rack32 : public Print
 
     // Build the Home Assistant discovery topic/payload (caller still needs to set val_tpl)
     // The MQTT client id is prepended to the supplied 'id' to make a unique id
-    char * getHassDiscoveryTopic(char topic[], char * id, char * component);
-    void getHassDiscoveryJson(JsonVariant json, char * id);
+    char * getHassDiscoveryTopic(char topic[], char * prefix, char * component, char * id);
+    void getHassDiscoveryJson(JsonVariant json, char * id, char * name);
 
     // Return a pointer to the LCD so firmware can customise if required
     // Should be called after .begin()
