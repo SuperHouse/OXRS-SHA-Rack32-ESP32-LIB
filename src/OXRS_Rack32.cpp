@@ -583,6 +583,11 @@ bool OXRS_Rack32::publishTelemetry(JsonVariant json)
   return success;
 }
 
+bool OXRS_Rack32::isHassDiscoveryEnabled()
+{
+  return g_hassDiscoveryEnabled;
+}
+
 void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, char * name)
 {
   char uniqueId[64];

@@ -76,6 +76,9 @@ class OXRS_Rack32 : public Print
     bool publishStatus(JsonVariant json);
     bool publishTelemetry(JsonVariant json);
 
+    // Is Home Assistant discovery enabled
+    bool isHassDiscoveryEnabled();
+    
     // Build the Home Assistant discovery topic/payload (caller still needs to set val_tpl)
     // The MQTT client id is prepended to the supplied 'id' to make a unique id
     void getHassDiscoveryJson(JsonVariant json, char * id, char * name);
