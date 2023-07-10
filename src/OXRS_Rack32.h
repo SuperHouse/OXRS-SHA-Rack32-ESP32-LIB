@@ -57,11 +57,6 @@ class OXRS_Rack32 : public Print
     void setConfigSchema(JsonVariant json);
     void setCommandSchema(JsonVariant json);
 
-    // Build the Home Assistant discovery topic/payload (caller still needs to set val_tpl)
-    // The MQTT client id is prepended to the supplied 'id' to make a unique id
-    char * getHassDiscoveryTopic(char topic[], char * component, char * id);
-    void getHassDiscoveryJson(JsonVariant json, char * id, char * name);
-
     // Return a pointer to the LCD so firmware can customise if required
     // Should be called after .begin()
     OXRS_LCD * getLCD(void);
@@ -81,8 +76,12 @@ class OXRS_Rack32 : public Print
     bool publishStatus(JsonVariant json);
     bool publishTelemetry(JsonVariant json);
 
-    // Generic publish helper
-    bool publish(JsonVariant json, char * topic, bool retained);
+    // Build the Home Assistant discovery topic/payload (caller still needs to set val_tpl)
+    // The MQTT client id is prepended to the supplied 'id' to make a unique id
+    void getHassDiscoveryJson(JsonVariant json, char * id, char * name);
+
+    // Helper for publishing Home Assistant self-discovery payloads
+    bool publishHassDiscovery(JsonVariant json, char * component, char * id);
 
     // Implement Print.h wrapper
     virtual size_t write(uint8_t);
