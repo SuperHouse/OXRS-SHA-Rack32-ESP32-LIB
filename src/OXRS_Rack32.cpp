@@ -68,6 +68,9 @@ jsonCallback _onCommand;
 bool     _tempSensorFound = false;
 uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 
+// Home Assistant self-discovery topic prefix
+char g_hassDiscoveryTopicPrefix[64] = "homeassistant";
+
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
 {
@@ -201,6 +204,11 @@ void _getConfigSchemaJson(JsonVariant json)
   eventDisplaySeconds["type"] = "integer";
   eventDisplaySeconds["minimum"] = 0;
   eventDisplaySeconds["maximum"] = 600;
+
+  JsonObject hassDiscoveryTopicPrefix = properties.createNestedObject("hassDiscoveryTopicPrefix");
+  hassDiscoveryTopicPrefix["title"] = "Home Assistant Discovery Topic Prefix";
+  hassDiscoveryTopicPrefix["description"] = "Prefix for the Home Assistant discovery topic (defaults to 'homeassistant`).";
+  hassDiscoveryTopicPrefix["type"] = "string";
 }
 
 void _getCommandSchemaJson(JsonVariant json)
@@ -321,6 +329,12 @@ void _mqttConfig(JsonVariant json)
   if (json.containsKey("eventDisplaySeconds"))
   {
     _screen.setOnTimeEvent(json["eventDisplaySeconds"].as<int>());
+  }
+
+  // Home Assistant discovery config
+  if (json.containsKey("hassDiscoveryTopicPrefix"))
+  {
+    strcpy(g_hassDiscoveryTopicPrefix, json["hassDiscoveryTopicPrefix"]);
   }
 
   // Pass on to the firmware callback
@@ -468,9 +482,9 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
-char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * prefix, char * component, char * id)
+char * OXRS_Rack32::getHassDiscoveryTopic(char topic[], char * component, char * id)
 {
-  sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), prefix, component, _mqtt.getClientId(), id);
+  sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), g_hassDiscoveryTopicPrefix, component, _mqtt.getClientId(), id);
   return topic;
 }
 
