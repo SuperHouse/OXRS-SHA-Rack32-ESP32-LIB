@@ -623,6 +623,13 @@ bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char 
   char topic[64];
   sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), g_hassDiscoveryTopicPrefix, component, _mqtt.getClientId(), id);
 
+  // Check for a null payload and ensure we send an empty JSON object
+  // to clear any existing Home Assistant config
+  if (json.isNull())
+  {
+    json = json.to<JsonObject>();
+  }
+
   bool success = _mqtt.publish(json, topic, true);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
