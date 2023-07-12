@@ -59,7 +59,7 @@ class OXRS_Rack32 : public Print
 
     // Return a pointer to the LCD so firmware can customise if required
     // Should be called after .begin()
-    OXRS_LCD* getLCD(void);
+    OXRS_LCD * getLCD(void);
 
     // Helpers for standard I/O setup of the LCD
     void setDisplayPortLayout(uint8_t mcpCount, int layout);
@@ -73,8 +73,13 @@ class OXRS_Rack32 : public Print
     void apiPost(const char * path, Router::Middleware * middleware);
         
     // Helpers for publishing to stat/ and tele/ topics
-    boolean publishStatus(JsonVariant json);
-    boolean publishTelemetry(JsonVariant json);
+    bool publishStatus(JsonVariant json);
+    bool publishTelemetry(JsonVariant json);
+
+    // Helpers for Home Assistant discovery
+    bool isHassDiscoveryEnabled();
+    void getHassDiscoveryJson(JsonVariant json, char * id, char * name);
+    bool publishHassDiscovery(JsonVariant json, char * component, char * id);
 
     // Implement Print.h wrapper
     virtual size_t write(uint8_t);
@@ -90,7 +95,7 @@ class OXRS_Rack32 : public Print
     void _updateTempSensor(void);
     uint32_t _lastTempUpdate;
     
-    boolean _isNetworkConnected(void);
+    bool _isNetworkConnected(void);
 };
 
 #endif

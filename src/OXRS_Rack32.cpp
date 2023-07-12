@@ -68,6 +68,10 @@ jsonCallback _onCommand;
 bool     _tempSensorFound = false;
 uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 
+// Home Assistant self-discovery
+bool g_hassDiscoveryEnabled = false;
+char g_hassDiscoveryTopicPrefix[64] = "homeassistant";
+
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
 {
@@ -201,6 +205,17 @@ void _getConfigSchemaJson(JsonVariant json)
   eventDisplaySeconds["type"] = "integer";
   eventDisplaySeconds["minimum"] = 0;
   eventDisplaySeconds["maximum"] = 600;
+
+  // Home Assistant discovery config
+  JsonObject hassDiscoveryEnabled = properties.createNestedObject("hassDiscoveryEnabled");
+  hassDiscoveryEnabled["title"] = "Home Assistant Discovery";
+  hassDiscoveryEnabled["description"] = "Publish Home Assistant discovery config (defaults to 'false`).";
+  hassDiscoveryEnabled["type"] = "boolean";
+
+  JsonObject hassDiscoveryTopicPrefix = properties.createNestedObject("hassDiscoveryTopicPrefix");
+  hassDiscoveryTopicPrefix["title"] = "Home Assistant Discovery Topic Prefix";
+  hassDiscoveryTopicPrefix["description"] = "Prefix for the Home Assistant discovery topic (defaults to 'homeassistant`).";
+  hassDiscoveryTopicPrefix["type"] = "string";
 }
 
 void _getCommandSchemaJson(JsonVariant json)
@@ -321,6 +336,17 @@ void _mqttConfig(JsonVariant json)
   if (json.containsKey("eventDisplaySeconds"))
   {
     _screen.setOnTimeEvent(json["eventDisplaySeconds"].as<int>());
+  }
+
+  // Home Assistant discovery config
+  if (json.containsKey("hassDiscoveryEnabled"))
+  {
+    g_hassDiscoveryEnabled = json["hassDiscoveryEnabled"].as<bool>();
+  }
+
+  if (json.containsKey("hassDiscoveryTopicPrefix"))
+  {
+    strcpy(g_hassDiscoveryTopicPrefix, json["hassDiscoveryTopicPrefix"]);
   }
 
   // Pass on to the firmware callback
@@ -468,7 +494,7 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
-OXRS_LCD* OXRS_Rack32::getLCD()
+OXRS_LCD * OXRS_Rack32::getLCD()
 {
   return &_screen;
 }
@@ -508,7 +534,7 @@ void OXRS_Rack32::apiPost(const char * path, Router::Middleware * middleware)
   _api.post(path, middleware);
 }
 
-boolean OXRS_Rack32::publishStatus(JsonVariant json)
+bool OXRS_Rack32::publishStatus(JsonVariant json)
 {
   // Check for something we can show on the screen
   if (json.containsKey("index"))
@@ -543,17 +569,69 @@ boolean OXRS_Rack32::publishStatus(JsonVariant json)
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  boolean success = _mqtt.publishStatus(json);
+  bool success = _mqtt.publishStatus(json);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
 
-boolean OXRS_Rack32::publishTelemetry(JsonVariant json)
+bool OXRS_Rack32::publishTelemetry(JsonVariant json)
 {
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  boolean success = _mqtt.publishTelemetry(json);
+  bool success = _mqtt.publishTelemetry(json);
+  if (success) { _screen.triggerMqttTxLed(); }
+  return success;
+}
+
+bool OXRS_Rack32::isHassDiscoveryEnabled()
+{
+  return g_hassDiscoveryEnabled;
+}
+
+void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, char * name)
+{
+  char uniqueId[64];
+  sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
+  json["uniq_id"] = uniqueId;
+  json["obj_id"] = uniqueId;
+  json["name"] = name;
+
+  char topic[64];
+  json["stat_t"] = _mqtt.getStatusTopic(topic);
+  json["avty_t"] = _mqtt.getLwtTopic(topic);
+  json["avty_tpl"] = "{% if value_json.online == true %}online{% else %}offline{% endif %}";
+
+  JsonObject dev = json.createNestedObject("dev");
+  dev["name"] = _mqtt.getClientId();
+  dev["mf"] = FW_MAKER;
+  dev["mdl"] = FW_NAME;
+  dev["sw"] = STRINGIFY(FW_VERSION);
+
+  JsonArray ids = dev.createNestedArray("ids");
+  ids.add(_mqtt.getClientId());
+}
+
+bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char * id)
+{
+  // Exit early if Home Assistant discovery has been disabled
+  if (!g_hassDiscoveryEnabled) { return false; }
+
+  // Exit early if no network connection
+  if (!_isNetworkConnected()) { return false; }
+
+  // Build the discovery topic
+  char topic[64];
+  sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), g_hassDiscoveryTopicPrefix, component, _mqtt.getClientId(), id);
+
+  // Check for a null payload and ensure we send an empty JSON object
+  // to clear any existing Home Assistant config
+  if (json.isNull())
+  {
+    json = json.to<JsonObject>();
+  }
+
+  bool success = _mqtt.publish(json, topic, true);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
@@ -735,7 +813,7 @@ void OXRS_Rack32::_updateTempSensor(void)
   }
 }
 
-boolean OXRS_Rack32::_isNetworkConnected(void)
+bool OXRS_Rack32::_isNetworkConnected(void)
 {
 #if defined(WIFI_MODE)
   return WiFi.status() == WL_CONNECTED;

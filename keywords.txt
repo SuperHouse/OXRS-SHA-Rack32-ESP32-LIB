@@ -28,6 +28,10 @@ loop			KEYWORD2
 publishStatus		KEYWORD2
 publishTelemetry	KEYWORD2
 
+isHassDiscoveryEnabled  KEYWORD2
+getHassDiscoveryJson  KEYWORD2
+publishHassDiscovery  KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
