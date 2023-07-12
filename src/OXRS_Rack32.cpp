@@ -206,6 +206,7 @@ void _getConfigSchemaJson(JsonVariant json)
   eventDisplaySeconds["minimum"] = 0;
   eventDisplaySeconds["maximum"] = 600;
 
+  // Home Assistant discovery config
   JsonObject hassDiscoveryEnabled = properties.createNestedObject("hassDiscoveryEnabled");
   hassDiscoveryEnabled["title"] = "Home Assistant Discovery";
   hassDiscoveryEnabled["description"] = "Publish Home Assistant discovery config (defaults to 'false`).";
