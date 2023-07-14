@@ -395,31 +395,6 @@ OXRS_Rack32::OXRS_Rack32(const uint8_t * fwLogo)
   _fwLogo = fwLogo;
 }
 
-void OXRS_Rack32::setMqttBroker(const char * broker, uint16_t port)
-{
-  _mqtt.setBroker(broker, port);
-}
-
-void OXRS_Rack32::setMqttClientId(const char * clientId)
-{
-  _mqtt.setClientId(clientId);
-}
-
-void OXRS_Rack32::setMqttAuth(const char * username, const char * password)
-{
-  _mqtt.setAuth(username, password);
-}
-
-void OXRS_Rack32::setMqttTopicPrefix(const char * prefix)
-{
-  _mqtt.setTopicPrefix(prefix);
-}
-
-void OXRS_Rack32::setMqttTopicSuffix(const char * suffix)
-{
-  _mqtt.setTopicSuffix(suffix);
-}
-
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
   // Get our firmware details
@@ -494,44 +469,19 @@ void OXRS_Rack32::setCommandSchema(JsonVariant json)
   _mergeJson(_fwCommandSchema.as<JsonVariant>(), json);
 }
 
+OXRS_MQTT * OXRS_Rack32::getMQTT()
+{
+  return &_mqtt;
+}
+
+OXRS_API * OXRS_Rack32::getAPI()
+{
+  return &_api;
+}
+
 OXRS_LCD * OXRS_Rack32::getLCD()
 {
   return &_screen;
-}
-
-void OXRS_Rack32::setDisplayPortLayout(uint8_t mcpCount, int layout)
-{
-  _screen.drawPorts(layout, mcpCount);
-}
-
-void OXRS_Rack32::setDisplayPinType(uint8_t mcp, uint8_t pin, int type)
-{
-  _screen.setPinType(mcp, pin, type);
-}
-
-void OXRS_Rack32::setDisplayPinInvert(uint8_t mcp, uint8_t pin, int invert)
-{
-  _screen.setPinInvert(mcp, pin, invert);
-}
-
-void OXRS_Rack32::setDisplayPinDisabled(uint8_t mcp, uint8_t pin, int disabled)
-{
-  _screen.setPinDisabled(mcp, pin, disabled);
-}
-
-void OXRS_Rack32::updateDisplayPorts(uint8_t mcp, uint16_t ioValue)
-{
-  _screen.process(mcp, ioValue);
-}
-
-void OXRS_Rack32::apiGet(const char * path, Router::Middleware * middleware)
-{
-  _api.get(path, middleware);
-}
-
-void OXRS_Rack32::apiPost(const char * path, Router::Middleware * middleware)
-{
-  _api.post(path, middleware);
 }
 
 bool OXRS_Rack32::publishStatus(JsonVariant json)
@@ -589,28 +539,6 @@ bool OXRS_Rack32::isHassDiscoveryEnabled()
   return g_hassDiscoveryEnabled;
 }
 
-void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, bool isTelemetry)
-{
-  char uniqueId[64];
-  sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
-  json["uniq_id"] = uniqueId;
-  json["obj_id"] = uniqueId;
-
-  char topic[64];
-  json["stat_t"] = isTelemetry ? _mqtt.getTelemetryTopic(topic) : _mqtt.getStatusTopic(topic);
-  json["avty_t"] = _mqtt.getLwtTopic(topic);
-  json["avty_tpl"] = "{% if value_json.online == true %}online{% else %}offline{% endif %}";
-
-  JsonObject dev = json.createNestedObject("dev");
-  dev["name"] = _mqtt.getClientId();
-  dev["mf"] = FW_MAKER;
-  dev["mdl"] = FW_NAME;
-  dev["sw"] = STRINGIFY(FW_VERSION);
-
-  JsonArray ids = dev.createNestedArray("ids");
-  ids.add(_mqtt.getClientId());
-}
-
 bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char * id)
 {
   // Exit early if Home Assistant discovery has been disabled
@@ -619,18 +547,7 @@ bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char 
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  // Build the discovery topic
-  char topic[64];
-  sprintf_P(topic, PSTR("%s/%s/%s/%s/config"), g_hassDiscoveryTopicPrefix, component, _mqtt.getClientId(), id);
-
-  // Check for a null payload and ensure we send an empty JSON object
-  // to clear any existing Home Assistant config
-  if (json.isNull())
-  {
-    json = json.to<JsonObject>();
-  }
-
-  bool success = _mqtt.publish(json, topic, true);
+  bool success = _mqtt.publishHassDiscovery(json, g_hassDiscoveryTopicPrefix, component, id);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
