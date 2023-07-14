@@ -589,16 +589,15 @@ bool OXRS_Rack32::isHassDiscoveryEnabled()
   return g_hassDiscoveryEnabled;
 }
 
-void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, char * name)
+void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id, bool isTelemetry)
 {
   char uniqueId[64];
   sprintf_P(uniqueId, PSTR("%s_%s"), _mqtt.getClientId(), id);
   json["uniq_id"] = uniqueId;
   json["obj_id"] = uniqueId;
-  json["name"] = name;
 
   char topic[64];
-  json["stat_t"] = _mqtt.getStatusTopic(topic);
+  json["stat_t"] = isTelemetry ? _mqtt.getTelemetryTopic(topic) : _mqtt.getStatusTopic(topic);
   json["avty_t"] = _mqtt.getLwtTopic(topic);
   json["avty_tpl"] = "{% if value_json.online == true %}online{% else %}offline{% endif %}";
 
