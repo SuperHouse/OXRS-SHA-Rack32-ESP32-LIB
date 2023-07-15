@@ -539,15 +539,26 @@ bool OXRS_Rack32::isHassDiscoveryEnabled()
   return g_hassDiscoveryEnabled;
 }
 
+void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id)
+{
+  _mqtt.getHassDiscoveryJson(json, id);
+
+  // Update the firmware details
+  json["dev"]["mf"] = FW_MAKER;
+  json["dev"]["mdl"] = FW_NAME;
+  json["dev"]["sw"] = STRINGIFY(FW_VERSION);
+  json["dev"]["hw"] = "Rack32";
+}
+
 bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char * id)
 {
-  // Exit early if Home Assistant discovery has been disabled
+  // Exit early if Home Assistant discovery not enabled
   if (!g_hassDiscoveryEnabled) { return false; }
-
+  
   // Exit early if no network connection
   if (!_isNetworkConnected()) { return false; }
 
-  bool success = _mqtt.publishHassDiscovery(json, g_hassDiscoveryTopicPrefix, component, id);
+  bool success = _mqtt.publishHassDiscovery(json, component, id);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
