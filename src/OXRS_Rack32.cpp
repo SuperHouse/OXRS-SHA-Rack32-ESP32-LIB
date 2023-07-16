@@ -70,7 +70,6 @@ uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 
 // Home Assistant self-discovery
 bool g_hassDiscoveryEnabled = false;
-char g_hassDiscoveryTopicPrefix[64] = "homeassistant";
 
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
@@ -346,7 +345,7 @@ void _mqttConfig(JsonVariant json)
 
   if (json.containsKey("hassDiscoveryTopicPrefix"))
   {
-    strcpy(g_hassDiscoveryTopicPrefix, json["hassDiscoveryTopicPrefix"]);
+    _mqtt.setHassDiscoveryTopicPrefix(json["hassDiscoveryTopicPrefix"]);
   }
 
   // Pass on to the firmware callback
