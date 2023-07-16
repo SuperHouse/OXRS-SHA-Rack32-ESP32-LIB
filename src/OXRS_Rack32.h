@@ -42,14 +42,6 @@ class OXRS_Rack32 : public Print
   public:
     OXRS_Rack32(const uint8_t * fwLogo = NULL);
 
-    // These are only needed if performing manual configuration in your sketch, otherwise
-    // config is provisioned via the API and bootstrap page
-    void setMqttBroker(const char * broker, uint16_t port);
-    void setMqttClientId(const char * clientId);
-    void setMqttAuth(const char * username, const char * password);
-    void setMqttTopicPrefix(const char * prefix);
-    void setMqttTopicSuffix(const char * suffix);
-
     void begin(jsonCallback config, jsonCallback command);
     void loop(void);
 
@@ -57,28 +49,23 @@ class OXRS_Rack32 : public Print
     void setConfigSchema(JsonVariant json);
     void setCommandSchema(JsonVariant json);
 
+    // Return a pointer to the MQTT library
+    OXRS_MQTT * getMQTT(void);
+
+    // Return a pointer to the API library
+    OXRS_API * getAPI(void);
+
     // Return a pointer to the LCD so firmware can customise if required
     // Should be called after .begin()
     OXRS_LCD * getLCD(void);
-
-    // Helpers for standard I/O setup of the LCD
-    void setDisplayPortLayout(uint8_t mcpCount, int layout);
-    void setDisplayPinType(uint8_t mcp, uint8_t pin, int type);
-    void setDisplayPinInvert(uint8_t mcp, uint8_t pin, int invert);
-    void setDisplayPinDisabled(uint8_t mcp, uint8_t pin, int disabled);
-    void updateDisplayPorts(uint8_t mcp, uint16_t ioValue);
-
-    // Helpers for registering custom REST API endpoints
-    void apiGet(const char * path, Router::Middleware * middleware);
-    void apiPost(const char * path, Router::Middleware * middleware);
-        
+    
     // Helpers for publishing to stat/ and tele/ topics
     bool publishStatus(JsonVariant json);
     bool publishTelemetry(JsonVariant json);
 
     // Helpers for Home Assistant discovery
     bool isHassDiscoveryEnabled();
-    void getHassDiscoveryJson(JsonVariant json, char * id, bool isTelemetry = false);
+    void getHassDiscoveryJson(JsonVariant json, char * id);
     bool publishHassDiscovery(JsonVariant json, char * component, char * id);
 
     // Implement Print.h wrapper
