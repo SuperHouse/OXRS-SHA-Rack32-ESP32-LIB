@@ -8,29 +8,17 @@ OXRS_Rack32	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-setMqttBroker		KEYWORD2
-setMqttClientId	KEYWORD2
-setMqttAuth		KEYWORD2
-setMqttTopicPrefix	KEYWORD2
-setMqttTopicSuffix	KEYWORD2
+begin			KEYWORD2
+loop			KEYWORD2
 
 setConfigSchema	KEYWORD2
 setCommandSchema	KEYWORD2
 
-setDisplayPortLayout	KEYWORD2
-setDisplayPinType	KEYWORD2
-setDisplayPinInvert	KEYWORD2
-updateDisplayPorts	KEYWORD2
-
-begin			KEYWORD2
-loop			KEYWORD2
+getMQTT   KEYWORD2
+getAPI    KEYWORD2
 
 publishStatus		KEYWORD2
 publishTelemetry	KEYWORD2
-
-isHassDiscoveryEnabled  KEYWORD2
-getHassDiscoveryJson  KEYWORD2
-publishHassDiscovery  KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

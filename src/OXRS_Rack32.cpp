@@ -68,9 +68,6 @@ jsonCallback _onCommand;
 bool     _tempSensorFound = false;
 uint32_t _tempUpdateMs    = DEFAULT_TEMP_UPDATE_MS;
 
-// Home Assistant self-discovery
-bool g_hassDiscoveryEnabled = false;
-
 /* JSON helpers */
 void _mergeJson(JsonVariant dst, JsonVariantConst src)
 {
@@ -204,17 +201,6 @@ void _getConfigSchemaJson(JsonVariant json)
   eventDisplaySeconds["type"] = "integer";
   eventDisplaySeconds["minimum"] = 0;
   eventDisplaySeconds["maximum"] = 600;
-
-  // Home Assistant discovery config
-  JsonObject hassDiscoveryEnabled = properties.createNestedObject("hassDiscoveryEnabled");
-  hassDiscoveryEnabled["title"] = "Home Assistant Discovery";
-  hassDiscoveryEnabled["description"] = "Publish Home Assistant discovery config (defaults to 'false`).";
-  hassDiscoveryEnabled["type"] = "boolean";
-
-  JsonObject hassDiscoveryTopicPrefix = properties.createNestedObject("hassDiscoveryTopicPrefix");
-  hassDiscoveryTopicPrefix["title"] = "Home Assistant Discovery Topic Prefix";
-  hassDiscoveryTopicPrefix["description"] = "Prefix for the Home Assistant discovery topic (defaults to 'homeassistant`).";
-  hassDiscoveryTopicPrefix["type"] = "string";
 }
 
 void _getCommandSchemaJson(JsonVariant json)
@@ -335,17 +321,6 @@ void _mqttConfig(JsonVariant json)
   if (json.containsKey("eventDisplaySeconds"))
   {
     _screen.setOnTimeEvent(json["eventDisplaySeconds"].as<int>());
-  }
-
-  // Home Assistant discovery config
-  if (json.containsKey("hassDiscoveryEnabled"))
-  {
-    g_hassDiscoveryEnabled = json["hassDiscoveryEnabled"].as<bool>();
-  }
-
-  if (json.containsKey("hassDiscoveryTopicPrefix"))
-  {
-    _mqtt.setHassDiscoveryTopicPrefix(json["hassDiscoveryTopicPrefix"]);
   }
 
   // Pass on to the firmware callback
@@ -529,35 +504,6 @@ bool OXRS_Rack32::publishTelemetry(JsonVariant json)
   if (!_isNetworkConnected()) { return false; }
 
   bool success = _mqtt.publishTelemetry(json);
-  if (success) { _screen.triggerMqttTxLed(); }
-  return success;
-}
-
-bool OXRS_Rack32::isHassDiscoveryEnabled()
-{
-  return g_hassDiscoveryEnabled;
-}
-
-void OXRS_Rack32::getHassDiscoveryJson(JsonVariant json, char * id)
-{
-  _mqtt.getHassDiscoveryJson(json, id);
-
-  // Update the firmware details
-  json["dev"]["mf"] = FW_MAKER;
-  json["dev"]["mdl"] = FW_NAME;
-  json["dev"]["sw"] = STRINGIFY(FW_VERSION);
-  json["dev"]["hw"] = "Rack32";
-}
-
-bool OXRS_Rack32::publishHassDiscovery(JsonVariant json, char * component, char * id)
-{
-  // Exit early if Home Assistant discovery not enabled
-  if (!g_hassDiscoveryEnabled) { return false; }
-  
-  // Exit early if no network connection
-  if (!_isNetworkConnected()) { return false; }
-
-  bool success = _mqtt.publishHassDiscovery(json, component, id);
   if (success) { _screen.triggerMqttTxLed(); }
   return success;
 }
