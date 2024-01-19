@@ -53,8 +53,8 @@ Adafruit_MCP9808 _tempSensor;
 const uint8_t * _fwLogo;
  
 // Supported firmware config and command schemas
-DynamicJsonDocument _fwConfigSchema(JSON_CONFIG_MAX_SIZE);
-DynamicJsonDocument _fwCommandSchema(JSON_COMMAND_MAX_SIZE);
+JsonDocument _fwConfigSchema;
+JsonDocument _fwCommandSchema;
 
 // MQTT callbacks wrapped by _mqttConfig/_mqttCommand
 jsonCallback _onConfig;
@@ -94,7 +94,7 @@ void _mergeJson(JsonVariant dst, JsonVariantConst src)
 /* Adoption info builders */
 void _getFirmwareJson(JsonVariant json)
 {
-  JsonObject firmware = json.createNestedObject("firmware");
+  JsonObject firmware = json["firmware"].to<JsonObject>();
 
   firmware["name"] = FW_NAME;
   firmware["shortName"] = FW_SHORT_NAME;
@@ -108,7 +108,7 @@ void _getFirmwareJson(JsonVariant json)
 
 void _getSystemJson(JsonVariant json)
 {
-  JsonObject system = json.createNestedObject("system");
+  JsonObject system = json["system"].to<JsonObject>();
 
   system["heapUsedBytes"] = ESP.getHeapSize();
   system["heapFreeBytes"] = ESP.getFreeHeap();
@@ -124,7 +124,7 @@ void _getSystemJson(JsonVariant json)
 
 void _getNetworkJson(JsonVariant json)
 {
-  JsonObject network = json.createNestedObject("network");
+  JsonObject network = json["network"].to<JsonObject>();
 
   byte mac[6];
 
@@ -147,14 +147,14 @@ void _getNetworkJson(JsonVariant json)
 
 void _getConfigSchemaJson(JsonVariant json)
 {
-  JsonObject configSchema = json.createNestedObject("configSchema");
+  JsonObject configSchema = json["configSchema"].to<JsonObject>();
   
   // Config schema metadata
   configSchema["$schema"] = JSON_SCHEMA_VERSION;
   configSchema["title"] = FW_SHORT_NAME;
   configSchema["type"] = "object";
 
-  JsonObject properties = configSchema.createNestedObject("properties");
+  JsonObject properties = configSchema["properties"].to<JsonObject>();
 
   // Firmware config schema (if any)
   if (!_fwConfigSchema.isNull())
@@ -165,7 +165,7 @@ void _getConfigSchemaJson(JsonVariant json)
   // MCP9808 temp sensor config
   if (_tempSensorFound)
   {
-    JsonObject temperatureUpdateSeconds = properties.createNestedObject("temperatureUpdateSeconds");
+    JsonObject temperatureUpdateSeconds = properties["temperatureUpdateSeconds"].to<JsonObject>();
     temperatureUpdateSeconds["title"] = "Temperature Update Interval (seconds)";
     temperatureUpdateSeconds["description"] = "How often to read and report the value from the onboard MCP9808 temperature sensor (defaults to 60 seconds, setting to 0 disables temperature reports). Must be a number between 0 and 86400 (i.e. 1 day).";
     temperatureUpdateSeconds["type"] = "integer";
@@ -174,28 +174,28 @@ void _getConfigSchemaJson(JsonVariant json)
   }
 
   // LCD config
-  JsonObject activeBrightnessPercent = properties.createNestedObject("activeBrightnessPercent");
+  JsonObject activeBrightnessPercent = properties["activeBrightnessPercent"].to<JsonObject>();
   activeBrightnessPercent["title"] = "LCD Active Brightness (%)";
   activeBrightnessPercent["description"] = "Brightness of the LCD when active (defaults to 100%). Must be a number between 0 and 100.";
   activeBrightnessPercent["type"] = "integer";
   activeBrightnessPercent["minimum"] = 0;
   activeBrightnessPercent["maximum"] = 100;
  
-  JsonObject inactiveBrightnessPercent = properties.createNestedObject("inactiveBrightnessPercent");
+  JsonObject inactiveBrightnessPercent = properties["inactiveBrightnessPercent"].to<JsonObject>();
   inactiveBrightnessPercent["title"] = "LCD Inactive Brightness (%)";
   inactiveBrightnessPercent["description"] = "Brightness of the LCD when in-active (defaults to 10%). Must be a number between 0 and 100.";
   inactiveBrightnessPercent["type"] = "integer";
   inactiveBrightnessPercent["minimum"] = 0;
   inactiveBrightnessPercent["maximum"] = 100;
 
-  JsonObject activeDisplaySeconds = properties.createNestedObject("activeDisplaySeconds");
+  JsonObject activeDisplaySeconds = properties["activeDisplaySeconds"].to<JsonObject>();
   activeDisplaySeconds["title"] = "LCD Active Display Timeout (seconds)";
   activeDisplaySeconds["description"] = "How long the LCD remains 'active' after an event is detected (defaults to 10 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
   activeDisplaySeconds["type"] = "integer";
   activeDisplaySeconds["minimum"] = 0;
   activeDisplaySeconds["maximum"] = 600;
 
-  JsonObject eventDisplaySeconds = properties.createNestedObject("eventDisplaySeconds");
+  JsonObject eventDisplaySeconds = properties["eventDisplaySeconds"].to<JsonObject>();
   eventDisplaySeconds["title"] = "LCD Event Display Timeout (seconds)";
   eventDisplaySeconds["description"] = "How long the last event is displayed on the LCD (defaults to 3 seconds, setting to 0 disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
   eventDisplaySeconds["type"] = "integer";
@@ -205,14 +205,14 @@ void _getConfigSchemaJson(JsonVariant json)
 
 void _getCommandSchemaJson(JsonVariant json)
 {
-  JsonObject commandSchema = json.createNestedObject("commandSchema");
+  JsonObject commandSchema = json["commandSchema"].to<JsonObject>();
   
   // Command schema metadata
   commandSchema["$schema"] = JSON_SCHEMA_VERSION;
   commandSchema["title"] = FW_SHORT_NAME;
   commandSchema["type"] = "object";
 
-  JsonObject properties = commandSchema.createNestedObject("properties");
+  JsonObject properties = commandSchema["properties"].to<JsonObject>();
 
   // Firmware command schema (if any)
   if (!_fwCommandSchema.isNull())
@@ -221,7 +221,7 @@ void _getCommandSchemaJson(JsonVariant json)
   }
 
   // Rack32 commands
-  JsonObject restart = properties.createNestedObject("restart");
+  JsonObject restart = properties["restart"].to<JsonObject>();
   restart["title"] = "Restart";
   restart["type"] = "boolean";
 }
@@ -246,7 +246,7 @@ void _mqttConnected()
   _logger.setTopic(_mqtt.getLogTopic(logTopic));
 
   // Publish device adoption info
-  DynamicJsonDocument json(JSON_ADOPT_MAX_SIZE);
+  JsonDocument json;
   _mqtt.publishAdopt(_api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
@@ -372,7 +372,7 @@ OXRS_Rack32::OXRS_Rack32(const uint8_t * fwLogo)
 void OXRS_Rack32::begin(jsonCallback config, jsonCallback command)
 {
   // Get our firmware details
-  DynamicJsonDocument json(512);
+  JsonDocument json;
   _getFirmwareJson(json.as<JsonVariant>());
 
   // Log firmware details
@@ -675,7 +675,7 @@ void OXRS_Rack32::_updateTempSensor(void)
       _screen.showTemp(temperature); 
 
       // Publish temp to mqtt
-      StaticJsonDocument<32> json;
+      JsonDocument json;
       json["temperature"] = temperature;
       publishTelemetry(json.as<JsonVariant>());
     }
