@@ -9,6 +9,9 @@
 #include <OXRS_API.h>                 // For REST API
 #include <OXRS_LCD.h>                 // For LCD runtime displays
 
+// LCD screen
+#define       OXRS_LCD_ENABLE
+
 // WifiManager
 #define       WM_CONFIG_PORTAL_TIMEOUT_S  300
 
